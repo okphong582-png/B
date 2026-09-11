@@ -1,0 +1,2997 @@
+{
+  "sunwin_tx": {
+    "channel_id": "sunwin_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 101,
+    "total_bets": 89,
+    "total_wins": 35,
+    "total_losses": 54,
+    "win_rate": 39.3,
+    "current_streak": 0,
+    "max_streak": 3,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "3247553",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 19,
+          "2": 20,
+          "3": 32,
+          "4": 30,
+          "5": 25,
+          "6": 24
+        },
+        "dicePercentages": {
+          "1": 12.7,
+          "2": 13.3,
+          "3": 21.3,
+          "4": 20,
+          "5": 16.7,
+          "6": 16
+        },
+        "hotFace": 3,
+        "hotFaceRate": 21.3,
+        "secondHot": 4,
+        "secondHotRate": 20,
+        "coldFace": 1,
+        "coldFaceRate": 12.7,
+        "topPair": "2-3",
+        "topPairRate": 18,
+        "tripleRate": 4,
+        "predictedDices": [
+          3,
+          4,
+          5
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "3": 1,
+          "4": 1,
+          "6": 2,
+          "7": 3,
+          "8": 6,
+          "9": 6,
+          "10": 3,
+          "11": 7,
+          "12": 6,
+          "13": 2,
+          "14": 5,
+          "15": 2,
+          "16": 5,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 3 đang có tần suất cao nhất (21.3%), mặt ⚀ 1 đang lạnh (12.7%). Cặp số tiềm năng: 2-3."
+      },
+      "predicted_dices": [
+        3,
+        4,
+        5
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:33.888Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "3247552",
+        "predicted": "TÀI",
+        "actual": "XỈU",
+        "is_win": false,
+        "predicted_dices": [
+          3,
+          4,
+          5
+        ],
+        "actual_dices": [
+          1,
+          1,
+          4
+        ],
+        "time": "23:39:33"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:33.888Z"
+  },
+  "sunwin_xdlive": {
+    "channel_id": "sunwin_xdlive",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 46,
+    "total_bets": 34,
+    "total_wins": 20,
+    "total_losses": 14,
+    "win_rate": 58.8,
+    "current_streak": 1,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "291551",
+      "prediction": "LẺ",
+      "confidence": 76,
+      "game_type": "xocdia",
+      "dice_analysis": {
+        "gameType": "xocdia",
+        "viStats": {
+          "tu_trang": 0,
+          "ba_trang": 17,
+          "sap_doi": 26,
+          "ba_do": 0,
+          "tu_do": 0
+        },
+        "viPercentages": {
+          "tu_trang": 0,
+          "ba_trang": 39.5,
+          "sap_doi": 60.5,
+          "ba_do": 0,
+          "tu_do": 0
+        },
+        "topVi": "Sấp Đôi (2 Đỏ - 2 Trắng)",
+        "topProb": 60.5,
+        "predictedVi": "Sấp Đôi (2 Đỏ - 2 Trắng)",
+        "summary": "Vị chủ đạo: Sấp Đôi (2 Đỏ - 2 Trắng) (chiếm 60.5% các phiên gần đây)."
+      },
+      "predicted_dices": [
+        4,
+        5,
+        3
+      ],
+      "predicted_sum": 8,
+      "created_at": "2026-09-11T16:39:22.761Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:22.759Z"
+  },
+  "sunwin_sicbo": {
+    "channel_id": "sunwin_sicbo",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 50,
+    "total_losses": 42,
+    "win_rate": 54.3,
+    "current_streak": 3,
+    "max_streak": 6,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "2725083",
+      "prediction": "TÀI",
+      "confidence": 76,
+      "game_type": "sicbo",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 19,
+          "2": 19,
+          "3": 36,
+          "4": 29,
+          "5": 28,
+          "6": 19
+        },
+        "dicePercentages": {
+          "1": 12.7,
+          "2": 12.7,
+          "3": 24,
+          "4": 19.3,
+          "5": 18.7,
+          "6": 12.7
+        },
+        "hotFace": 3,
+        "hotFaceRate": 24,
+        "secondHot": 4,
+        "secondHotRate": 19.3,
+        "coldFace": 6,
+        "coldFaceRate": 12.7,
+        "topPair": "3-4",
+        "topPairRate": 22,
+        "tripleRate": 4,
+        "predictedDices": [
+          3,
+          4,
+          5
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "4": 1,
+          "6": 2,
+          "7": 2,
+          "8": 4,
+          "9": 5,
+          "10": 8,
+          "11": 8,
+          "12": 9,
+          "13": 5,
+          "14": 4,
+          "15": 1,
+          "16": 1
+        },
+        "summary": "Mặt ⚅ 3 đang có tần suất cao nhất (24%), mặt ⚀ 6 đang lạnh (12.7%). Cặp số tiềm năng: 3-4."
+      },
+      "predicted_dices": [
+        3,
+        4,
+        5
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:59.009Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "2725082",
+        "predicted": "TÀI",
+        "actual": "TÀI",
+        "is_win": true,
+        "predicted_dices": [
+          3,
+          4,
+          5
+        ],
+        "actual_dices": [
+          2,
+          6,
+          3
+        ],
+        "time": "23:39:59"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:59.009Z"
+  },
+  "hitclub_tx": {
+    "channel_id": "hitclub_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 46,
+    "total_losses": 46,
+    "win_rate": 50,
+    "current_streak": 4,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "3150441",
+      "prediction": "XỈU",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 21,
+          "2": 28,
+          "3": 30,
+          "4": 32,
+          "5": 21,
+          "6": 18
+        },
+        "dicePercentages": {
+          "1": 14,
+          "2": 18.7,
+          "3": 20,
+          "4": 21.3,
+          "5": 14,
+          "6": 12
+        },
+        "hotFace": 4,
+        "hotFaceRate": 21.3,
+        "secondHot": 3,
+        "secondHotRate": 20,
+        "coldFace": 6,
+        "coldFaceRate": 12,
+        "topPair": "2-4",
+        "topPairRate": 22,
+        "tripleRate": 6,
+        "predictedDices": [
+          2,
+          3,
+          4
+        ],
+        "predictedSum": 9,
+        "sumFreq": {
+          "5": 1,
+          "6": 4,
+          "7": 2,
+          "8": 8,
+          "9": 4,
+          "10": 10,
+          "11": 9,
+          "12": 3,
+          "13": 2,
+          "14": 4,
+          "15": 2,
+          "18": 1
+        },
+        "summary": "Mặt ⚅ 4 đang có tần suất cao nhất (21.3%), mặt ⚀ 6 đang lạnh (12%). Cặp số tiềm năng: 2-4."
+      },
+      "predicted_dices": [
+        2,
+        3,
+        4
+      ],
+      "predicted_sum": 9,
+      "created_at": "2026-09-11T16:39:28.829Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "3150440",
+        "predicted": "XỈU",
+        "actual": "XỈU",
+        "is_win": true,
+        "predicted_dices": [
+          2,
+          3,
+          4
+        ],
+        "actual_dices": [
+          2,
+          1,
+          3
+        ],
+        "time": "23:39:28"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:28.829Z"
+  },
+  "hitclub_txmd5": {
+    "channel_id": "hitclub_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 40,
+    "total_losses": 52,
+    "win_rate": 43.5,
+    "current_streak": 0,
+    "max_streak": 7,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "2606883",
+      "prediction": "XỈU",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 25,
+          "2": 24,
+          "3": 23,
+          "4": 29,
+          "5": 27,
+          "6": 22
+        },
+        "dicePercentages": {
+          "1": 16.7,
+          "2": 16,
+          "3": 15.3,
+          "4": 19.3,
+          "5": 18,
+          "6": 14.7
+        },
+        "hotFace": 4,
+        "hotFaceRate": 19.3,
+        "secondHot": 5,
+        "secondHotRate": 18,
+        "coldFace": 6,
+        "coldFaceRate": 14.7,
+        "topPair": "4-6",
+        "topPairRate": 16,
+        "tripleRate": 2,
+        "predictedDices": [
+          1,
+          4,
+          5
+        ],
+        "predictedSum": 10,
+        "sumFreq": {
+          "4": 1,
+          "6": 2,
+          "7": 6,
+          "8": 7,
+          "9": 5,
+          "10": 2,
+          "11": 9,
+          "12": 6,
+          "13": 5,
+          "14": 1,
+          "15": 2,
+          "16": 2,
+          "17": 2
+        },
+        "summary": "Mặt ⚅ 4 đang có tần suất cao nhất (19.3%), mặt ⚀ 6 đang lạnh (14.7%). Cặp số tiềm năng: 4-6."
+      },
+      "predicted_dices": [
+        1,
+        4,
+        5
+      ],
+      "predicted_sum": 10,
+      "created_at": "2026-09-11T16:39:49.171Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "2606882",
+        "predicted": "XỈU",
+        "actual": "TÀI",
+        "is_win": false,
+        "predicted_dices": [
+          1,
+          4,
+          5
+        ],
+        "actual_dices": [
+          2,
+          5,
+          4
+        ],
+        "time": "23:39:49"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:49.171Z"
+  },
+  "hitclub_sicbo": {
+    "channel_id": "hitclub_sicbo",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 44,
+    "total_losses": 48,
+    "win_rate": 47.8,
+    "current_streak": 0,
+    "max_streak": 8,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "701624",
+      "prediction": "TÀI",
+      "confidence": 80,
+      "game_type": "sicbo",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 27,
+          "2": 26,
+          "3": 18,
+          "4": 20,
+          "5": 30,
+          "6": 29
+        },
+        "dicePercentages": {
+          "1": 18,
+          "2": 17.3,
+          "3": 12,
+          "4": 13.3,
+          "5": 20,
+          "6": 19.3
+        },
+        "hotFace": 5,
+        "hotFaceRate": 20,
+        "secondHot": 6,
+        "secondHotRate": 19.3,
+        "coldFace": 3,
+        "coldFaceRate": 12,
+        "topPair": "5-6",
+        "topPairRate": 22,
+        "tripleRate": 6,
+        "predictedDices": [
+          1,
+          5,
+          6
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "5": 2,
+          "6": 3,
+          "7": 6,
+          "8": 6,
+          "9": 4,
+          "10": 6,
+          "11": 2,
+          "12": 3,
+          "13": 7,
+          "14": 3,
+          "15": 2,
+          "16": 1,
+          "17": 4,
+          "18": 1
+        },
+        "summary": "Mặt ⚅ 5 đang có tần suất cao nhất (20%), mặt ⚀ 3 đang lạnh (12%). Cặp số tiềm năng: 5-6."
+      },
+      "predicted_dices": [
+        1,
+        5,
+        6
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:29.089Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "0701623",
+        "predicted": "TÀI",
+        "actual": "XỈU",
+        "is_win": false,
+        "predicted_dices": [
+          2,
+          5,
+          6
+        ],
+        "actual_dices": [
+          3,
+          3,
+          1
+        ],
+        "time": "23:39:29"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:29.088Z"
+  },
+  "club789_tx": {
+    "channel_id": "club789_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 103,
+    "total_bets": 91,
+    "total_wins": 48,
+    "total_losses": 43,
+    "win_rate": 52.7,
+    "current_streak": 0,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "3133613",
+      "prediction": "TÀI",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 26,
+          "2": 16,
+          "3": 24,
+          "4": 15,
+          "5": 42,
+          "6": 27
+        },
+        "dicePercentages": {
+          "1": 17.3,
+          "2": 10.7,
+          "3": 16,
+          "4": 10,
+          "5": 28,
+          "6": 18
+        },
+        "hotFace": 5,
+        "hotFaceRate": 28,
+        "secondHot": 6,
+        "secondHotRate": 18,
+        "coldFace": 4,
+        "coldFaceRate": 10,
+        "topPair": "5-6",
+        "topPairRate": 28,
+        "tripleRate": 4,
+        "predictedDices": [
+          1,
+          5,
+          6
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "4": 1,
+          "6": 2,
+          "7": 3,
+          "8": 6,
+          "9": 4,
+          "10": 4,
+          "11": 7,
+          "12": 5,
+          "13": 4,
+          "14": 7,
+          "15": 2,
+          "16": 2,
+          "17": 2,
+          "18": 1
+        },
+        "summary": "Mặt ⚅ 5 đang có tần suất cao nhất (28%), mặt ⚀ 4 đang lạnh (10%). Cặp số tiềm năng: 5-6."
+      },
+      "predicted_dices": [
+        1,
+        5,
+        6
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:24.018Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:22.794Z"
+  },
+  "club789_xdlive": {
+    "channel_id": "club789_xdlive",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 48,
+    "total_losses": 44,
+    "win_rate": 52.2,
+    "current_streak": 0,
+    "max_streak": 5,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "2545321",
+      "prediction": "LẺ",
+      "confidence": 76,
+      "game_type": "xocdia",
+      "dice_analysis": {
+        "gameType": "xocdia",
+        "viStats": {
+          "tu_trang": 0,
+          "ba_trang": 19,
+          "sap_doi": 28,
+          "ba_do": 0,
+          "tu_do": 3
+        },
+        "viPercentages": {
+          "tu_trang": 0,
+          "ba_trang": 38,
+          "sap_doi": 56,
+          "ba_do": 0,
+          "tu_do": 6
+        },
+        "topVi": "Sấp Đôi (2 Đỏ - 2 Trắng)",
+        "topProb": 56,
+        "predictedVi": "Sấp Đôi (2 Đỏ - 2 Trắng)",
+        "summary": "Vị chủ đạo: Sấp Đôi (2 Đỏ - 2 Trắng) (chiếm 56% các phiên gần đây)."
+      },
+      "predicted_dices": [
+        4,
+        5,
+        3
+      ],
+      "predicted_sum": 8,
+      "created_at": "2026-09-11T16:39:59.071Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "2545320",
+        "predicted": "LẺ",
+        "actual": "CHẴN",
+        "is_win": false,
+        "predicted_dices": [
+          4,
+          5,
+          3
+        ],
+        "actual_dices": [
+          5,
+          3,
+          1
+        ],
+        "time": "23:39:59"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:59.071Z"
+  },
+  "club789_sicbo": {
+    "channel_id": "club789_sicbo",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 45,
+    "total_losses": 47,
+    "win_rate": 48.9,
+    "current_streak": 0,
+    "max_streak": 6,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "2893331",
+      "prediction": "XỈU",
+      "confidence": 80,
+      "game_type": "sicbo",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 25,
+          "2": 21,
+          "3": 27,
+          "4": 21,
+          "5": 19,
+          "6": 37
+        },
+        "dicePercentages": {
+          "1": 16.7,
+          "2": 14,
+          "3": 18,
+          "4": 14,
+          "5": 12.7,
+          "6": 24.7
+        },
+        "hotFace": 6,
+        "hotFaceRate": 24.7,
+        "secondHot": 3,
+        "secondHotRate": 18,
+        "coldFace": 5,
+        "coldFaceRate": 12.7,
+        "topPair": "6-6",
+        "topPairRate": 26,
+        "tripleRate": 2,
+        "predictedDices": [
+          1,
+          3,
+          6
+        ],
+        "predictedSum": 10,
+        "sumFreq": {
+          "5": 2,
+          "6": 3,
+          "7": 3,
+          "8": 4,
+          "9": 6,
+          "10": 4,
+          "11": 6,
+          "12": 6,
+          "13": 5,
+          "14": 4,
+          "15": 2,
+          "16": 1,
+          "17": 3,
+          "18": 1
+        },
+        "summary": "Mặt ⚅ 6 đang có tần suất cao nhất (24.7%), mặt ⚀ 5 đang lạnh (12.7%). Cặp số tiềm năng: 6-6."
+      },
+      "predicted_dices": [
+        1,
+        3,
+        6
+      ],
+      "predicted_sum": 10,
+      "created_at": "2026-09-11T16:39:54.105Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "2893330",
+        "predicted": "XỈU",
+        "actual": "TÀI",
+        "is_win": false,
+        "predicted_dices": [
+          1,
+          3,
+          6
+        ],
+        "actual_dices": [
+          6,
+          1,
+          4
+        ],
+        "time": "23:39:54"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:54.105Z"
+  },
+  "b52_tx": {
+    "channel_id": "b52_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 103,
+    "total_bets": 91,
+    "total_wins": 47,
+    "total_losses": 44,
+    "win_rate": 51.6,
+    "current_streak": 1,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "2938961",
+      "prediction": "XỈU",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 26,
+          "2": 24,
+          "3": 30,
+          "4": 23,
+          "5": 29,
+          "6": 18
+        },
+        "dicePercentages": {
+          "1": 17.3,
+          "2": 16,
+          "3": 20,
+          "4": 15.3,
+          "5": 19.3,
+          "6": 12
+        },
+        "hotFace": 3,
+        "hotFaceRate": 20,
+        "secondHot": 5,
+        "secondHotRate": 19.3,
+        "coldFace": 6,
+        "coldFaceRate": 12,
+        "topPair": "1-2",
+        "topPairRate": 16,
+        "tripleRate": 4,
+        "predictedDices": [
+          1,
+          3,
+          5
+        ],
+        "predictedSum": 9,
+        "sumFreq": {
+          "5": 1,
+          "6": 2,
+          "7": 7,
+          "8": 5,
+          "9": 8,
+          "10": 6,
+          "11": 4,
+          "12": 6,
+          "13": 5,
+          "14": 3,
+          "15": 2,
+          "18": 1
+        },
+        "summary": "Mặt ⚅ 3 đang có tần suất cao nhất (20%), mặt ⚀ 6 đang lạnh (12%). Cặp số tiềm năng: 1-2."
+      },
+      "predicted_dices": [
+        1,
+        3,
+        5
+      ],
+      "predicted_sum": 9,
+      "created_at": "2026-09-11T16:39:23.948Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:22.838Z"
+  },
+  "b52_txmd5": {
+    "channel_id": "b52_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 30,
+    "total_losses": 62,
+    "win_rate": 32.6,
+    "current_streak": 0,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "2123206",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 23,
+          "2": 23,
+          "3": 23,
+          "4": 24,
+          "5": 33,
+          "6": 24
+        },
+        "dicePercentages": {
+          "1": 15.3,
+          "2": 15.3,
+          "3": 15.3,
+          "4": 16,
+          "5": 22,
+          "6": 16
+        },
+        "hotFace": 5,
+        "hotFaceRate": 22,
+        "secondHot": 4,
+        "secondHotRate": 16,
+        "coldFace": 3,
+        "coldFaceRate": 15.3,
+        "topPair": "5-6",
+        "topPairRate": 24,
+        "tripleRate": 0,
+        "predictedDices": [
+          4,
+          5,
+          6
+        ],
+        "predictedSum": 15,
+        "sumFreq": {
+          "5": 1,
+          "6": 2,
+          "7": 3,
+          "8": 5,
+          "9": 6,
+          "10": 8,
+          "11": 6,
+          "12": 8,
+          "14": 2,
+          "15": 4,
+          "16": 4,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 5 đang có tần suất cao nhất (22%), mặt ⚀ 3 đang lạnh (15.3%). Cặp số tiềm năng: 5-6."
+      },
+      "predicted_dices": [
+        4,
+        5,
+        6
+      ],
+      "predicted_sum": 15,
+      "created_at": "2026-09-11T16:39:49.032Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "2123205",
+        "predicted": "TÀI",
+        "actual": "XỈU",
+        "is_win": false,
+        "predicted_dices": [
+          4,
+          5,
+          6
+        ],
+        "actual_dices": [
+          1,
+          5,
+          3
+        ],
+        "time": "23:39:49"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:49.032Z"
+  },
+  "b52_sicbo": {
+    "channel_id": "b52_sicbo",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 103,
+    "total_bets": 91,
+    "total_wins": 42,
+    "total_losses": 49,
+    "win_rate": 46.2,
+    "current_streak": 1,
+    "max_streak": 5,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "4043651",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "sicbo",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 31,
+          "2": 30,
+          "3": 20,
+          "4": 20,
+          "5": 28,
+          "6": 21
+        },
+        "dicePercentages": {
+          "1": 20.7,
+          "2": 20,
+          "3": 13.3,
+          "4": 13.3,
+          "5": 18.7,
+          "6": 14
+        },
+        "hotFace": 1,
+        "hotFaceRate": 20.7,
+        "secondHot": 2,
+        "secondHotRate": 20,
+        "coldFace": 4,
+        "coldFaceRate": 13.3,
+        "topPair": "1-2",
+        "topPairRate": 26,
+        "tripleRate": 4,
+        "predictedDices": [
+          1,
+          2,
+          5
+        ],
+        "predictedSum": 8,
+        "sumFreq": {
+          "4": 1,
+          "5": 3,
+          "6": 6,
+          "7": 3,
+          "8": 7,
+          "9": 4,
+          "10": 4,
+          "11": 6,
+          "12": 4,
+          "13": 3,
+          "14": 3,
+          "15": 3,
+          "16": 2,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 1 đang có tần suất cao nhất (20.7%), mặt ⚀ 4 đang lạnh (13.3%). Cặp số tiềm năng: 1-2."
+      },
+      "predicted_dices": [
+        1,
+        2,
+        5
+      ],
+      "predicted_sum": 8,
+      "created_at": "2026-09-11T16:39:24.331Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:22.852Z"
+  },
+  "rikvip_tx": {
+    "channel_id": "rikvip_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 86,
+    "total_bets": 74,
+    "total_wins": 34,
+    "total_losses": 40,
+    "win_rate": 45.9,
+    "current_streak": 2,
+    "max_streak": 2,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "2359245",
+      "prediction": "XỈU",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 19,
+          "2": 28,
+          "3": 29,
+          "4": 27,
+          "5": 27,
+          "6": 20
+        },
+        "dicePercentages": {
+          "1": 12.7,
+          "2": 18.7,
+          "3": 19.3,
+          "4": 18,
+          "5": 18,
+          "6": 13.3
+        },
+        "hotFace": 3,
+        "hotFaceRate": 19.3,
+        "secondHot": 2,
+        "secondHotRate": 18.7,
+        "coldFace": 1,
+        "coldFaceRate": 12.7,
+        "topPair": "3-4",
+        "topPairRate": 26,
+        "tripleRate": 4,
+        "predictedDices": [
+          2,
+          3,
+          4
+        ],
+        "predictedSum": 9,
+        "sumFreq": {
+          "6": 3,
+          "7": 5,
+          "8": 6,
+          "9": 5,
+          "10": 7,
+          "11": 4,
+          "12": 8,
+          "13": 6,
+          "14": 2,
+          "15": 1,
+          "16": 3
+        },
+        "summary": "Mặt ⚅ 3 đang có tần suất cao nhất (19.3%), mặt ⚀ 1 đang lạnh (12.7%). Cặp số tiềm năng: 3-4."
+      },
+      "predicted_dices": [
+        2,
+        3,
+        4
+      ],
+      "predicted_sum": 9,
+      "created_at": "2026-09-11T16:39:24.934Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:22.859Z"
+  },
+  "rikvip_txmd5": {
+    "channel_id": "rikvip_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 49,
+    "total_losses": 43,
+    "win_rate": 53.3,
+    "current_streak": 0,
+    "max_streak": 7,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1384918",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 31,
+          "2": 19,
+          "3": 18,
+          "4": 20,
+          "5": 28,
+          "6": 34
+        },
+        "dicePercentages": {
+          "1": 20.7,
+          "2": 12.7,
+          "3": 12,
+          "4": 13.3,
+          "5": 18.7,
+          "6": 22.7
+        },
+        "hotFace": 6,
+        "hotFaceRate": 22.7,
+        "secondHot": 1,
+        "secondHotRate": 20.7,
+        "coldFace": 3,
+        "coldFaceRate": 12,
+        "topPair": "5-6",
+        "topPairRate": 32,
+        "tripleRate": 0,
+        "predictedDices": [
+          1,
+          5,
+          6
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "4": 1,
+          "5": 4,
+          "6": 3,
+          "7": 3,
+          "8": 2,
+          "9": 6,
+          "10": 4,
+          "11": 2,
+          "12": 3,
+          "13": 9,
+          "14": 3,
+          "15": 5,
+          "16": 3,
+          "17": 2
+        },
+        "summary": "Mặt ⚅ 6 đang có tần suất cao nhất (22.7%), mặt ⚀ 3 đang lạnh (12%). Cặp số tiềm năng: 5-6."
+      },
+      "predicted_dices": [
+        1,
+        5,
+        6
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:28.730Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "1384917",
+        "predicted": "TÀI",
+        "actual": "XỈU",
+        "is_win": false,
+        "predicted_dices": [
+          1,
+          5,
+          6
+        ],
+        "actual_dices": [
+          1,
+          6,
+          3
+        ],
+        "time": "23:39:28"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:28.729Z"
+  },
+  "lc79_tx": {
+    "channel_id": "lc79_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 103,
+    "total_bets": 91,
+    "total_wins": 47,
+    "total_losses": 44,
+    "win_rate": 51.6,
+    "current_streak": 3,
+    "max_streak": 6,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "6904614",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 29,
+          "2": 24,
+          "3": 26,
+          "4": 17,
+          "5": 29,
+          "6": 25
+        },
+        "dicePercentages": {
+          "1": 19.3,
+          "2": 16,
+          "3": 17.3,
+          "4": 11.3,
+          "5": 19.3,
+          "6": 16.7
+        },
+        "hotFace": 1,
+        "hotFaceRate": 19.3,
+        "secondHot": 5,
+        "secondHotRate": 19.3,
+        "coldFace": 4,
+        "coldFaceRate": 11.3,
+        "topPair": "2-3",
+        "topPairRate": 16,
+        "tripleRate": 2,
+        "predictedDices": [
+          1,
+          3,
+          5
+        ],
+        "predictedSum": 9,
+        "sumFreq": {
+          "5": 1,
+          "6": 3,
+          "7": 6,
+          "8": 5,
+          "9": 4,
+          "10": 8,
+          "11": 8,
+          "12": 3,
+          "13": 4,
+          "14": 2,
+          "15": 4,
+          "16": 1,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 1 đang có tần suất cao nhất (19.3%), mặt ⚀ 4 đang lạnh (11.3%). Cặp số tiềm năng: 2-3."
+      },
+      "predicted_dices": [
+        1,
+        3,
+        5
+      ],
+      "predicted_sum": 9,
+      "created_at": "2026-09-11T16:39:24.351Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:22.871Z"
+  },
+  "lc79_txmd5": {
+    "channel_id": "lc79_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 33,
+    "total_losses": 59,
+    "win_rate": 35.9,
+    "current_streak": 2,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "7040199",
+      "prediction": "XỈU",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 26,
+          "2": 22,
+          "3": 24,
+          "4": 21,
+          "5": 33,
+          "6": 24
+        },
+        "dicePercentages": {
+          "1": 17.3,
+          "2": 14.7,
+          "3": 16,
+          "4": 14,
+          "5": 22,
+          "6": 16
+        },
+        "hotFace": 5,
+        "hotFaceRate": 22,
+        "secondHot": 1,
+        "secondHotRate": 17.3,
+        "coldFace": 4,
+        "coldFaceRate": 14,
+        "topPair": "5-6",
+        "topPairRate": 24,
+        "tripleRate": 0,
+        "predictedDices": [
+          1,
+          3,
+          5
+        ],
+        "predictedSum": 9,
+        "sumFreq": {
+          "6": 5,
+          "7": 3,
+          "8": 4,
+          "9": 7,
+          "10": 2,
+          "11": 8,
+          "12": 6,
+          "13": 7,
+          "14": 4,
+          "15": 3,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 5 đang có tần suất cao nhất (22%), mặt ⚀ 4 đang lạnh (14%). Cặp số tiềm năng: 5-6."
+      },
+      "predicted_dices": [
+        1,
+        3,
+        5
+      ],
+      "predicted_sum": 9,
+      "created_at": "2026-09-11T16:39:43.684Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "7040198",
+        "predicted": "XỈU",
+        "actual": "XỈU",
+        "is_win": true,
+        "predicted_dices": [
+          1,
+          3,
+          5
+        ],
+        "actual_dices": [
+          1,
+          4,
+          5
+        ],
+        "time": "23:39:43"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:43.684Z"
+  },
+  "lc79_xocdia": {
+    "channel_id": "lc79_xocdia",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 105,
+    "total_bets": 93,
+    "total_wins": 0,
+    "total_losses": 93,
+    "win_rate": 0,
+    "current_streak": 0,
+    "max_streak": 0,
+    "weights": {
+      "markov": 0.27,
+      "pattern": 0.37,
+      "dice_matrix": 0.21,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "7931015",
+      "prediction": "LẺ",
+      "confidence": 77,
+      "game_type": "xocdia",
+      "dice_analysis": {
+        "gameType": "xocdia",
+        "viStats": {
+          "tu_trang": 30,
+          "ba_trang": 15,
+          "sap_doi": 0,
+          "ba_do": 4,
+          "tu_do": 1
+        },
+        "viPercentages": {
+          "tu_trang": 60,
+          "ba_trang": 30,
+          "sap_doi": 0,
+          "ba_do": 8,
+          "tu_do": 2
+        },
+        "topVi": "3 Trắng - 1 Đỏ",
+        "topProb": 30,
+        "predictedVi": "3 Trắng - 1 Đỏ",
+        "summary": "Vị chủ đạo: 3 Trắng - 1 Đỏ (chiếm 30% các phiên gần đây)."
+      },
+      "predicted_dices": [
+        4,
+        5,
+        3
+      ],
+      "predicted_sum": 8,
+      "created_at": "2026-09-11T16:40:03.796Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "7931014",
+        "predicted": "LẺ",
+        "actual": "TÀI",
+        "is_win": false,
+        "predicted_dices": [
+          4,
+          5,
+          3
+        ],
+        "actual_dices": [
+          4,
+          4,
+          3
+        ],
+        "time": "23:40:03"
+      },
+      {
+        "phien": "7931013",
+        "predicted": "LẺ",
+        "actual": "TÀI",
+        "is_win": false,
+        "predicted_dices": [
+          4,
+          5,
+          3
+        ],
+        "actual_dices": [
+          4,
+          4,
+          3
+        ],
+        "time": "23:39:28"
+      }
+    ],
+    "updated_at": "2026-09-11T16:40:03.795Z"
+  },
+  "betvip_tx": {
+    "channel_id": "betvip_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 53,
+    "total_losses": 39,
+    "win_rate": 57.6,
+    "current_streak": 0,
+    "max_streak": 13,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "7114116",
+      "prediction": "TÀI",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 28,
+          "2": 30,
+          "3": 24,
+          "4": 17,
+          "5": 28,
+          "6": 23
+        },
+        "dicePercentages": {
+          "1": 18.7,
+          "2": 20,
+          "3": 16,
+          "4": 11.3,
+          "5": 18.7,
+          "6": 15.3
+        },
+        "hotFace": 2,
+        "hotFaceRate": 20,
+        "secondHot": 1,
+        "secondHotRate": 18.7,
+        "coldFace": 4,
+        "coldFaceRate": 11.3,
+        "topPair": "2-3",
+        "topPairRate": 18,
+        "tripleRate": 0,
+        "predictedDices": [
+          1,
+          2,
+          5
+        ],
+        "predictedSum": 8,
+        "sumFreq": {
+          "4": 2,
+          "5": 1,
+          "6": 2,
+          "7": 6,
+          "8": 7,
+          "9": 5,
+          "10": 4,
+          "11": 3,
+          "12": 6,
+          "13": 7,
+          "14": 5,
+          "15": 1,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 2 đang có tần suất cao nhất (20%), mặt ⚀ 4 đang lạnh (11.3%). Cặp số tiềm năng: 2-3."
+      },
+      "predicted_dices": [
+        1,
+        2,
+        5
+      ],
+      "predicted_sum": 8,
+      "created_at": "2026-09-11T16:39:39.538Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "7114115",
+        "predicted": "XỈU",
+        "actual": "TÀI",
+        "is_win": false,
+        "predicted_dices": [
+          1,
+          2,
+          5
+        ],
+        "actual_dices": [
+          3,
+          5,
+          6
+        ],
+        "time": "23:39:39"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:39.538Z"
+  },
+  "betvip_txmd5": {
+    "channel_id": "betvip_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 46,
+    "total_losses": 46,
+    "win_rate": 50,
+    "current_streak": 0,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "7034650",
+      "prediction": "TÀI",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 18,
+          "2": 20,
+          "3": 37,
+          "4": 33,
+          "5": 16,
+          "6": 26
+        },
+        "dicePercentages": {
+          "1": 12,
+          "2": 13.3,
+          "3": 24.7,
+          "4": 22,
+          "5": 10.7,
+          "6": 17.3
+        },
+        "hotFace": 3,
+        "hotFaceRate": 24.7,
+        "secondHot": 4,
+        "secondHotRate": 22,
+        "coldFace": 5,
+        "coldFaceRate": 10.7,
+        "topPair": "3-4",
+        "topPairRate": 24,
+        "tripleRate": 2,
+        "predictedDices": [
+          3,
+          4,
+          6
+        ],
+        "predictedSum": 13,
+        "sumFreq": {
+          "4": 1,
+          "5": 3,
+          "6": 1,
+          "7": 3,
+          "8": 4,
+          "9": 3,
+          "10": 4,
+          "11": 13,
+          "12": 4,
+          "13": 7,
+          "14": 1,
+          "15": 2,
+          "16": 2,
+          "17": 2
+        },
+        "summary": "Mặt ⚅ 3 đang có tần suất cao nhất (24.7%), mặt ⚀ 5 đang lạnh (10.7%). Cặp số tiềm năng: 3-4."
+      },
+      "predicted_dices": [
+        3,
+        4,
+        6
+      ],
+      "predicted_sum": 13,
+      "created_at": "2026-09-11T16:39:49.336Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "7034649",
+        "predicted": "TÀI",
+        "actual": "XỈU",
+        "is_win": false,
+        "predicted_dices": [
+          3,
+          4,
+          6
+        ],
+        "actual_dices": [
+          3,
+          1,
+          3
+        ],
+        "time": "23:39:49"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:49.335Z"
+  },
+  "son789_tx": {
+    "channel_id": "son789_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 103,
+    "total_bets": 91,
+    "total_wins": 56,
+    "total_losses": 35,
+    "win_rate": 61.5,
+    "current_streak": 1,
+    "max_streak": 6,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1682140",
+      "prediction": "TÀI",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 19,
+          "2": 29,
+          "3": 20,
+          "4": 31,
+          "5": 29,
+          "6": 22
+        },
+        "dicePercentages": {
+          "1": 12.7,
+          "2": 19.3,
+          "3": 13.3,
+          "4": 20.7,
+          "5": 19.3,
+          "6": 14.7
+        },
+        "hotFace": 4,
+        "hotFaceRate": 20.7,
+        "secondHot": 2,
+        "secondHotRate": 19.3,
+        "coldFace": 1,
+        "coldFaceRate": 12.7,
+        "topPair": "4-5",
+        "topPairRate": 20,
+        "tripleRate": 4,
+        "predictedDices": [
+          2,
+          4,
+          5
+        ],
+        "predictedSum": 11,
+        "sumFreq": {
+          "4": 1,
+          "5": 3,
+          "6": 1,
+          "7": 3,
+          "8": 2,
+          "9": 6,
+          "10": 7,
+          "11": 7,
+          "12": 6,
+          "13": 3,
+          "14": 4,
+          "15": 5,
+          "16": 1,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 4 đang có tần suất cao nhất (20.7%), mặt ⚀ 1 đang lạnh (12.7%). Cặp số tiềm năng: 4-5."
+      },
+      "predicted_dices": [
+        2,
+        4,
+        5
+      ],
+      "predicted_sum": 11,
+      "created_at": "2026-09-11T16:39:24.849Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:23.000Z"
+  },
+  "son789_txmd5": {
+    "channel_id": "son789_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 41,
+    "total_losses": 51,
+    "win_rate": 44.6,
+    "current_streak": 1,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1682322",
+      "prediction": "XỈU",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 28,
+          "2": 27,
+          "3": 23,
+          "4": 23,
+          "5": 26,
+          "6": 23
+        },
+        "dicePercentages": {
+          "1": 18.7,
+          "2": 18,
+          "3": 15.3,
+          "4": 15.3,
+          "5": 17.3,
+          "6": 15.3
+        },
+        "hotFace": 1,
+        "hotFaceRate": 18.7,
+        "secondHot": 2,
+        "secondHotRate": 18,
+        "coldFace": 6,
+        "coldFaceRate": 15.3,
+        "topPair": "1-2",
+        "topPairRate": 20,
+        "tripleRate": 2,
+        "predictedDices": [
+          1,
+          2,
+          5
+        ],
+        "predictedSum": 8,
+        "sumFreq": {
+          "4": 2,
+          "5": 3,
+          "6": 3,
+          "7": 3,
+          "8": 4,
+          "9": 6,
+          "10": 5,
+          "11": 4,
+          "12": 7,
+          "13": 4,
+          "14": 3,
+          "15": 5,
+          "16": 1
+        },
+        "summary": "Mặt ⚅ 1 đang có tần suất cao nhất (18.7%), mặt ⚀ 6 đang lạnh (15.3%). Cặp số tiềm năng: 1-2."
+      },
+      "predicted_dices": [
+        1,
+        2,
+        5
+      ],
+      "predicted_sum": 8,
+      "created_at": "2026-09-11T16:39:39.516Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "1682321",
+        "predicted": "XỈU",
+        "actual": "XỈU",
+        "is_win": true,
+        "predicted_dices": [
+          1,
+          2,
+          5
+        ],
+        "actual_dices": [
+          1,
+          4,
+          1
+        ],
+        "time": "23:39:39"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:39.516Z"
+  },
+  "ta28_tx": {
+    "channel_id": "ta28_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 55,
+    "total_losses": 37,
+    "win_rate": 59.8,
+    "current_streak": 1,
+    "max_streak": 10,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1582711",
+      "prediction": "TÀI",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 21,
+          "2": 25,
+          "3": 25,
+          "4": 28,
+          "5": 27,
+          "6": 24
+        },
+        "dicePercentages": {
+          "1": 14,
+          "2": 16.7,
+          "3": 16.7,
+          "4": 18.7,
+          "5": 18,
+          "6": 16
+        },
+        "hotFace": 4,
+        "hotFaceRate": 18.7,
+        "secondHot": 5,
+        "secondHotRate": 18,
+        "coldFace": 1,
+        "coldFaceRate": 14,
+        "topPair": "4-5",
+        "topPairRate": 20,
+        "tripleRate": 6,
+        "predictedDices": [
+          2,
+          4,
+          5
+        ],
+        "predictedSum": 11,
+        "sumFreq": {
+          "4": 3,
+          "6": 2,
+          "7": 2,
+          "8": 4,
+          "9": 4,
+          "10": 5,
+          "11": 9,
+          "12": 7,
+          "13": 4,
+          "14": 5,
+          "15": 4,
+          "16": 1
+        },
+        "summary": "Mặt ⚅ 4 đang có tần suất cao nhất (18.7%), mặt ⚀ 1 đang lạnh (14%). Cặp số tiềm năng: 4-5."
+      },
+      "predicted_dices": [
+        2,
+        4,
+        5
+      ],
+      "predicted_sum": 11,
+      "created_at": "2026-09-11T16:39:28.765Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "1582710",
+        "predicted": "TÀI",
+        "actual": "TÀI",
+        "is_win": true,
+        "predicted_dices": [
+          2,
+          4,
+          5
+        ],
+        "actual_dices": [
+          4,
+          1,
+          6
+        ],
+        "time": "23:39:28"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:28.765Z"
+  },
+  "ta28_txmd5": {
+    "channel_id": "ta28_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 43,
+    "total_losses": 49,
+    "win_rate": 46.7,
+    "current_streak": 3,
+    "max_streak": 3,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1576329",
+      "prediction": "TÀI",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 23,
+          "2": 29,
+          "3": 23,
+          "4": 28,
+          "5": 22,
+          "6": 25
+        },
+        "dicePercentages": {
+          "1": 15.3,
+          "2": 19.3,
+          "3": 15.3,
+          "4": 18.7,
+          "5": 14.7,
+          "6": 16.7
+        },
+        "hotFace": 2,
+        "hotFaceRate": 19.3,
+        "secondHot": 4,
+        "secondHotRate": 18.7,
+        "coldFace": 5,
+        "coldFaceRate": 14.7,
+        "topPair": "4-5",
+        "topPairRate": 22,
+        "tripleRate": 6,
+        "predictedDices": [
+          2,
+          4,
+          6
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "4": 2,
+          "5": 1,
+          "6": 2,
+          "7": 4,
+          "8": 1,
+          "9": 8,
+          "10": 10,
+          "11": 7,
+          "12": 4,
+          "13": 1,
+          "14": 2,
+          "15": 7,
+          "18": 1
+        },
+        "summary": "Mặt ⚅ 2 đang có tần suất cao nhất (19.3%), mặt ⚀ 5 đang lạnh (14.7%). Cặp số tiềm năng: 4-5."
+      },
+      "predicted_dices": [
+        2,
+        4,
+        6
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:49.205Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "1576328",
+        "predicted": "TÀI",
+        "actual": "TÀI",
+        "is_win": true,
+        "predicted_dices": [
+          2,
+          4,
+          6
+        ],
+        "actual_dices": [
+          5,
+          4,
+          6
+        ],
+        "time": "23:39:49"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:49.205Z"
+  },
+  "luck8_txmd5": {
+    "channel_id": "luck8_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 103,
+    "total_bets": 91,
+    "total_wins": 45,
+    "total_losses": 46,
+    "win_rate": 49.5,
+    "current_streak": 1,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "2609111420",
+      "prediction": "TÀI",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 22,
+          "2": 15,
+          "3": 31,
+          "4": 19,
+          "5": 37,
+          "6": 26
+        },
+        "dicePercentages": {
+          "1": 14.7,
+          "2": 10,
+          "3": 20.7,
+          "4": 12.7,
+          "5": 24.7,
+          "6": 17.3
+        },
+        "hotFace": 5,
+        "hotFaceRate": 24.7,
+        "secondHot": 3,
+        "secondHotRate": 20.7,
+        "coldFace": 2,
+        "coldFaceRate": 10,
+        "topPair": "5-6",
+        "topPairRate": 30,
+        "tripleRate": 8,
+        "predictedDices": [
+          3,
+          5,
+          6
+        ],
+        "predictedSum": 14,
+        "sumFreq": {
+          "6": 1,
+          "7": 6,
+          "8": 4,
+          "9": 4,
+          "10": 7,
+          "11": 5,
+          "12": 5,
+          "13": 3,
+          "14": 5,
+          "15": 8,
+          "16": 2
+        },
+        "summary": "Mặt ⚅ 5 đang có tần suất cao nhất (24.7%), mặt ⚀ 2 đang lạnh (10%). Cặp số tiềm năng: 5-6."
+      },
+      "predicted_dices": [
+        3,
+        5,
+        6
+      ],
+      "predicted_sum": 14,
+      "created_at": "2026-09-11T16:39:24.668Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:23.032Z"
+  },
+  "luck8_sicbo40": {
+    "channel_id": "luck8_sicbo40",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 43,
+    "total_losses": 49,
+    "win_rate": 46.7,
+    "current_streak": 1,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "202609112130",
+      "prediction": "TÀI",
+      "confidence": 80,
+      "game_type": "sicbo",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 22,
+          "2": 33,
+          "3": 18,
+          "4": 23,
+          "5": 21,
+          "6": 33
+        },
+        "dicePercentages": {
+          "1": 14.7,
+          "2": 22,
+          "3": 12,
+          "4": 15.3,
+          "5": 14,
+          "6": 22
+        },
+        "hotFace": 2,
+        "hotFaceRate": 22,
+        "secondHot": 6,
+        "secondHotRate": 22,
+        "coldFace": 3,
+        "coldFaceRate": 12,
+        "topPair": "4-6",
+        "topPairRate": 16,
+        "tripleRate": 0,
+        "predictedDices": [
+          2,
+          4,
+          6
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "4": 1,
+          "5": 2,
+          "7": 1,
+          "8": 7,
+          "9": 7,
+          "10": 7,
+          "11": 5,
+          "12": 4,
+          "13": 7,
+          "14": 5,
+          "15": 2,
+          "16": 1,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 2 đang có tần suất cao nhất (22%), mặt ⚀ 3 đang lạnh (12%). Cặp số tiềm năng: 4-6."
+      },
+      "predicted_dices": [
+        2,
+        4,
+        6
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:29.050Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "202609112129",
+        "predicted": "TÀI",
+        "actual": "TÀI",
+        "is_win": true,
+        "predicted_dices": [
+          2,
+          4,
+          6
+        ],
+        "actual_dices": [
+          5,
+          6,
+          2
+        ],
+        "time": "23:39:29"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:29.050Z"
+  },
+  "xocdia88_txmd5": {
+    "channel_id": "xocdia88_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 103,
+    "total_bets": 91,
+    "total_wins": 40,
+    "total_losses": 51,
+    "win_rate": 44,
+    "current_streak": 2,
+    "max_streak": 7,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1729873",
+      "prediction": "TÀI",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 23,
+          "2": 20,
+          "3": 27,
+          "4": 28,
+          "5": 32,
+          "6": 20
+        },
+        "dicePercentages": {
+          "1": 15.3,
+          "2": 13.3,
+          "3": 18,
+          "4": 18.7,
+          "5": 21.3,
+          "6": 13.3
+        },
+        "hotFace": 5,
+        "hotFaceRate": 21.3,
+        "secondHot": 4,
+        "secondHotRate": 18.7,
+        "coldFace": 6,
+        "coldFaceRate": 13.3,
+        "topPair": "4-5",
+        "topPairRate": 28,
+        "tripleRate": 0,
+        "predictedDices": [
+          3,
+          4,
+          5
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "5": 1,
+          "6": 1,
+          "7": 6,
+          "8": 6,
+          "9": 2,
+          "10": 6,
+          "11": 7,
+          "12": 6,
+          "13": 8,
+          "14": 1,
+          "15": 6
+        },
+        "summary": "Mặt ⚅ 5 đang có tần suất cao nhất (21.3%), mặt ⚀ 6 đang lạnh (13.3%). Cặp số tiềm năng: 4-5."
+      },
+      "predicted_dices": [
+        3,
+        4,
+        5
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:24.511Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:23.070Z"
+  },
+  "ogkfan_txmd5": {
+    "channel_id": "ogkfan_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 54,
+    "total_losses": 38,
+    "win_rate": 58.7,
+    "current_streak": 0,
+    "max_streak": 7,
+    "weights": {
+      "markov": 0.26,
+      "pattern": 0.36,
+      "dice_matrix": 0.23,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "563679",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 28,
+          "2": 23,
+          "3": 21,
+          "4": 20,
+          "5": 26,
+          "6": 32
+        },
+        "dicePercentages": {
+          "1": 18.7,
+          "2": 15.3,
+          "3": 14,
+          "4": 13.3,
+          "5": 17.3,
+          "6": 21.3
+        },
+        "hotFace": 6,
+        "hotFaceRate": 21.3,
+        "secondHot": 1,
+        "secondHotRate": 18.7,
+        "coldFace": 4,
+        "coldFaceRate": 13.3,
+        "topPair": "5-6",
+        "topPairRate": 22,
+        "tripleRate": 2,
+        "predictedDices": [
+          1,
+          5,
+          6
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "4": 1,
+          "6": 3,
+          "7": 5,
+          "8": 7,
+          "9": 4,
+          "10": 4,
+          "11": 4,
+          "12": 6,
+          "13": 5,
+          "14": 3,
+          "15": 4,
+          "16": 2,
+          "17": 1,
+          "18": 1
+        },
+        "summary": "Mặt ⚅ 6 đang có tần suất cao nhất (21.3%), mặt ⚀ 4 đang lạnh (13.3%). Cặp số tiềm năng: 5-6."
+      },
+      "predicted_dices": [
+        1,
+        5,
+        6
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:33.840Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "563678",
+        "predicted": "TÀI",
+        "actual": "XỈU",
+        "is_win": false,
+        "predicted_dices": [
+          1,
+          5,
+          6
+        ],
+        "actual_dices": [
+          1,
+          6,
+          1
+        ],
+        "time": "23:39:33"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:33.840Z"
+  },
+  "iwin_tx": {
+    "channel_id": "iwin_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 95,
+    "total_bets": 83,
+    "total_wins": 44,
+    "total_losses": 39,
+    "win_rate": 53,
+    "current_streak": 2,
+    "max_streak": 4,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1978030",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 17,
+          "2": 25,
+          "3": 31,
+          "4": 33,
+          "5": 20,
+          "6": 24
+        },
+        "dicePercentages": {
+          "1": 11.3,
+          "2": 16.7,
+          "3": 20.7,
+          "4": 22,
+          "5": 13.3,
+          "6": 16
+        },
+        "hotFace": 4,
+        "hotFaceRate": 22,
+        "secondHot": 3,
+        "secondHotRate": 20.7,
+        "coldFace": 1,
+        "coldFaceRate": 11.3,
+        "topPair": "2-3",
+        "topPairRate": 20,
+        "tripleRate": 4,
+        "predictedDices": [
+          2,
+          3,
+          4
+        ],
+        "predictedSum": 9,
+        "sumFreq": {
+          "5": 1,
+          "6": 4,
+          "7": 2,
+          "8": 5,
+          "9": 5,
+          "10": 8,
+          "11": 6,
+          "12": 5,
+          "13": 5,
+          "14": 3,
+          "15": 2,
+          "16": 3,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 4 đang có tần suất cao nhất (22%), mặt ⚀ 1 đang lạnh (11.3%). Cặp số tiềm năng: 2-3."
+      },
+      "predicted_dices": [
+        2,
+        3,
+        4
+      ],
+      "predicted_sum": 9,
+      "created_at": "2026-09-11T16:39:24.596Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:23.085Z"
+  },
+  "iwin_txmd5": {
+    "channel_id": "iwin_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 51,
+    "total_losses": 41,
+    "win_rate": 55.4,
+    "current_streak": 1,
+    "max_streak": 11,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1413343",
+      "prediction": "XỈU",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 26,
+          "2": 17,
+          "3": 21,
+          "4": 34,
+          "5": 30,
+          "6": 22
+        },
+        "dicePercentages": {
+          "1": 17.3,
+          "2": 11.3,
+          "3": 14,
+          "4": 22.7,
+          "5": 20,
+          "6": 14.7
+        },
+        "hotFace": 4,
+        "hotFaceRate": 22.7,
+        "secondHot": 5,
+        "secondHotRate": 20,
+        "coldFace": 2,
+        "coldFaceRate": 11.3,
+        "topPair": "4-5",
+        "topPairRate": 28,
+        "tripleRate": 4,
+        "predictedDices": [
+          1,
+          4,
+          5
+        ],
+        "predictedSum": 10,
+        "sumFreq": {
+          "3": 1,
+          "4": 1,
+          "5": 1,
+          "6": 1,
+          "7": 5,
+          "8": 3,
+          "9": 4,
+          "10": 5,
+          "11": 5,
+          "12": 6,
+          "13": 8,
+          "14": 4,
+          "15": 5,
+          "16": 1
+        },
+        "summary": "Mặt ⚅ 4 đang có tần suất cao nhất (22.7%), mặt ⚀ 2 đang lạnh (11.3%). Cặp số tiềm năng: 4-5."
+      },
+      "predicted_dices": [
+        1,
+        4,
+        5
+      ],
+      "predicted_sum": 10,
+      "created_at": "2026-09-11T16:39:34.125Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "1413342",
+        "predicted": "XỈU",
+        "actual": "XỈU",
+        "is_win": true,
+        "predicted_dices": [
+          1,
+          4,
+          5
+        ],
+        "actual_dices": [
+          3,
+          1,
+          5
+        ],
+        "time": "23:39:34"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:34.125Z"
+  },
+  "max789_tx": {
+    "channel_id": "max789_tx",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 103,
+    "total_bets": 91,
+    "total_wins": 52,
+    "total_losses": 39,
+    "win_rate": 57.1,
+    "current_streak": 1,
+    "max_streak": 8,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1642978",
+      "prediction": "TÀI",
+      "confidence": 80,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 19,
+          "2": 25,
+          "3": 22,
+          "4": 30,
+          "5": 25,
+          "6": 29
+        },
+        "dicePercentages": {
+          "1": 12.7,
+          "2": 16.7,
+          "3": 14.7,
+          "4": 20,
+          "5": 16.7,
+          "6": 19.3
+        },
+        "hotFace": 4,
+        "hotFaceRate": 20,
+        "secondHot": 6,
+        "secondHotRate": 19.3,
+        "coldFace": 1,
+        "coldFaceRate": 12.7,
+        "topPair": "2-4",
+        "topPairRate": 18,
+        "tripleRate": 4,
+        "predictedDices": [
+          2,
+          4,
+          6
+        ],
+        "predictedSum": 12,
+        "sumFreq": {
+          "5": 1,
+          "6": 3,
+          "7": 3,
+          "8": 2,
+          "9": 3,
+          "10": 7,
+          "11": 7,
+          "12": 12,
+          "13": 2,
+          "14": 4,
+          "15": 3,
+          "16": 2,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 4 đang có tần suất cao nhất (20%), mặt ⚀ 1 đang lạnh (12.7%). Cặp số tiềm năng: 2-4."
+      },
+      "predicted_dices": [
+        2,
+        4,
+        6
+      ],
+      "predicted_sum": 12,
+      "created_at": "2026-09-11T16:39:24.546Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:23.099Z"
+  },
+  "max789_txmd5": {
+    "channel_id": "max789_txmd5",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 104,
+    "total_bets": 92,
+    "total_wins": 43,
+    "total_losses": 49,
+    "win_rate": 46.7,
+    "current_streak": 2,
+    "max_streak": 7,
+    "weights": {
+      "markov": 0.24,
+      "pattern": 0.35,
+      "dice_matrix": 0.26,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "1821278",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 30,
+          "2": 20,
+          "3": 29,
+          "4": 23,
+          "5": 31,
+          "6": 17
+        },
+        "dicePercentages": {
+          "1": 20,
+          "2": 13.3,
+          "3": 19.3,
+          "4": 15.3,
+          "5": 20.7,
+          "6": 11.3
+        },
+        "hotFace": 5,
+        "hotFaceRate": 20.7,
+        "secondHot": 1,
+        "secondHotRate": 20,
+        "coldFace": 6,
+        "coldFaceRate": 11.3,
+        "topPair": "4-5",
+        "topPairRate": 22,
+        "tripleRate": 2,
+        "predictedDices": [
+          1,
+          3,
+          5
+        ],
+        "predictedSum": 9,
+        "sumFreq": {
+          "5": 1,
+          "6": 4,
+          "7": 3,
+          "8": 5,
+          "9": 9,
+          "10": 7,
+          "11": 8,
+          "12": 4,
+          "13": 3,
+          "14": 3,
+          "15": 1,
+          "16": 1,
+          "17": 1
+        },
+        "summary": "Mặt ⚅ 5 đang có tần suất cao nhất (20.7%), mặt ⚀ 6 đang lạnh (11.3%). Cặp số tiềm năng: 4-5."
+      },
+      "predicted_dices": [
+        1,
+        3,
+        5
+      ],
+      "predicted_sum": 9,
+      "created_at": "2026-09-11T16:39:43.843Z"
+    },
+    "recent_matches": [
+      {
+        "phien": "1821277",
+        "predicted": "XỈU",
+        "actual": "XỈU",
+        "is_win": true,
+        "predicted_dices": [
+          1,
+          3,
+          5
+        ],
+        "actual_dices": [
+          3,
+          1,
+          6
+        ],
+        "time": "23:39:43"
+      }
+    ],
+    "updated_at": "2026-09-11T16:39:43.843Z"
+  },
+  "volta_general": {
+    "channel_id": "volta_general",
+    "platform": "Game",
+    "game_name": "Tài Xỉu",
+    "game_type": "taixiu",
+    "epochs": 101,
+    "total_bets": 89,
+    "total_wins": 31,
+    "total_losses": 58,
+    "win_rate": 34.8,
+    "current_streak": 0,
+    "max_streak": 14,
+    "weights": {
+      "markov": 0.25,
+      "pattern": 0.35,
+      "dice_matrix": 0.25,
+      "mean_reversion": 0.15
+    },
+    "learning_rate": 0.05,
+    "last_prediction": {
+      "phien_target": "329941",
+      "prediction": "XỈU",
+      "confidence": 76,
+      "game_type": "taixiu",
+      "dice_analysis": {
+        "gameType": "taixiu",
+        "diceCounts": {
+          "1": 0,
+          "2": 0,
+          "3": 50,
+          "4": 100,
+          "5": 0,
+          "6": 0
+        },
+        "dicePercentages": {
+          "1": 0,
+          "2": 0,
+          "3": 33.3,
+          "4": 66.7,
+          "5": 0,
+          "6": 0
+        },
+        "hotFace": 4,
+        "hotFaceRate": 66.7,
+        "secondHot": 3,
+        "secondHotRate": 33.3,
+        "coldFace": 6,
+        "coldFaceRate": 0,
+        "topPair": "3-4",
+        "topPairRate": 100,
+        "tripleRate": 0,
+        "predictedDices": [
+          1,
+          3,
+          4
+        ],
+        "predictedSum": 8,
+        "sumFreq": {
+          "11": 50
+        },
+        "summary": "Mặt ⚅ 4 đang có tần suất cao nhất (66.7%), mặt ⚀ 6 đang lạnh (0%). Cặp số tiềm năng: 3-4."
+      },
+      "predicted_dices": [
+        1,
+        3,
+        4
+      ],
+      "predicted_sum": 8,
+      "created_at": "2026-09-11T16:39:25.388Z"
+    },
+    "recent_matches": [],
+    "updated_at": "2026-09-11T16:39:23.115Z"
+  }
+}

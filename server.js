@@ -122,6 +122,27 @@ app.post('/api/force-refresh/:id', async (req, res) => {
   }
 });
 
+// API: Lấy bảng xếp hạng & tổng quan AI tự chơi của tất cả các cổng
+app.get('/api/ai/overview', (req, res) => {
+  try {
+    const overview = collector.getAiOverview();
+    res.json({ success: true, data: overview });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Lấy chi tiết AI phân tích vị và thống kê train của 1 cổng
+app.get('/api/ai/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const channelData = collector.getChannelData(id);
+    res.json({ success: true, ai: channelData.ai, prediction: channelData.prediction, latest: channelData.latest });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Bắt đầu quét dữ liệu các cổng game
 collector.startPolling(5000);
 

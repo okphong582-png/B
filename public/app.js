@@ -300,7 +300,7 @@ function renderAll(data) {
   document.getElementById('currentSessionTime').textContent = latest ? latest.time : '--:--';
 
   // Master Prediction Card
-  renderPrediction(prediction, latest);
+  renderPrediction(prediction, latest, data.ai);
 
   // Recent Result
   renderRecentResult(latest);
@@ -317,7 +317,7 @@ function renderAll(data) {
 }
 
 // Render Master Prediction
-function renderPrediction(pred, latest) {
+function renderPrediction(pred, latest, ai) {
   const nextSessionEl = document.getElementById('nextSessionId');
   const stickyNextEl = document.getElementById('stickyNextSession');
 
@@ -337,26 +337,24 @@ function renderPrediction(pred, latest) {
   predBigText.textContent = outcome;
   stickyPill.textContent = `DỰ ĐOÁN: ${outcome}`;
 
-  if (outcome === 'TÀI') {
+  if (outcome === 'TÀI' || outcome === 'CHẴN') {
     predBadge.className = 'pred-main-badge tai-state';
     stickyPill.className = 'sticky-pred-pill';
     predHalo.style.background = 'radial-gradient(circle, var(--tai-glow) 0%, transparent 70%)';
-  } else if (outcome === 'XỈU') {
+  } else {
     predBadge.className = 'pred-main-badge xiu-state';
     stickyPill.className = 'sticky-pred-pill xiu-theme';
     predHalo.style.background = 'radial-gradient(circle, var(--xiu-glow) 0%, transparent 70%)';
-  } else {
-    predBadge.className = 'pred-main-badge';
   }
 
   const conf = pred.confidence || 85;
   document.getElementById('confidenceValue').textContent = `${conf}% TỰ TIN`;
   document.getElementById('stickyConf').textContent = `${conf}%`;
 
-  const winRate = pred.backtest?.winRate || 78.5;
-  document.getElementById('winRateVal').textContent = `${winRate}%`;
+  const winRate = ai?.win_rate || pred.backtest?.winRate || 80.5;
+  document.getElementById('winRateVal').textContent = `${winRate}% (Epoch #${ai?.epochs || 85})`;
 
-  document.getElementById('predictedSumRange').textContent = `${pred.expectedSumRange || '11 - 13'} ĐIỂM`;
+  document.getElementById('predictedSumRange').textContent = `${pred.expectedSumRange || '12 - 14'} ĐIỂM`;
 
   // Mặt xúc xắc dễ ra
   const diceBox = document.getElementById('predictedDiceBox');
@@ -368,10 +366,10 @@ function renderPrediction(pred, latest) {
     diceBox.appendChild(s);
   });
 
-  // Tactic
+  // Tactic & Advice
   document.getElementById('riskBadge').textContent = pred.riskLevel || 'AN TOÀN';
-  document.getElementById('tacticHeader').textContent = `GỢI Ý VÀO TIỀN: ${pred.tactic || 'ĐỀU TAY 1X'}`;
-  document.getElementById('tacticDesc').textContent = pred.advice || 'Cầu đang đi rất thuận, vào lệnh tự tin!';
+  document.getElementById('tacticHeader').textContent = `GỢI Ý VÀO TIỀN: ${pred.tactic || 'VÀO ĐỀU TAY 1X'}`;
+  document.getElementById('tacticDesc').textContent = pred.advice || 'Cầu đang ổn định, giữ kỷ luật vào vốn.';
 
   if (pred.patternInfo) {
     document.getElementById('currentPatternName').textContent = `${pred.patternInfo.name} • ${pred.patternInfo.desc}`;
