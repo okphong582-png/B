@@ -1,7 +1,10 @@
 /**
  * TOOL TÀI XỈU VIP - TELEGRAM BOT CONTROLLER
- * Tương thích 100% mọi môi trường (Node.js local & GitHub Actions 24/7)
- * Sử dụng Telegram Bot API trực tiếp qua HTTP Long Polling.
+ * Hỗ trợ phân quyền Super Admin (7769479790, 8083052279)
+ * Lệnh /updatecong cập nhật API cổng game trực tiếp
+ * Lệnh /baotri phát thông báo bảo trì toàn hệ thống
+ * Tự động kick out lập tức khi token bị xóa hoặc hết hạn
+ * Liên hệ Admin mua token: @spamsmstaken và @icebearvndev
  */
 
 const firebase = require('./lib/firebase');
@@ -11,13 +14,16 @@ const config = require('./lib/config');
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8738721874:AAG22QXgkzi8tURDRWJLkmJQUCtdbIxnG2E';
 const BASE_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
-// Bộ nhớ đệm danh sách user đang bật thông báo tự động
+const ADMIN_CONTACT = `👑 <b>Admin 1:</b> @spamsmstaken\n👑 <b>Admin 2:</b> @icebearvndev`;
+
+// Bộ nhớ đệm
 const notificationSubscribers = new Set();
+const adminInputState = {}; // { [adminChatId]: { action: string, portalId?: string } }
 let lastBroadcastSessions = {};
 let isPolling = false;
 let updateOffset = 0;
 
-// Gọi Telegram API
+// Gọi Telegram Bot API
 async function callApi(method, body = {}) {
   try {
     const res = await fetch(`${BASE_URL}/${method}`, {
@@ -63,8 +69,8 @@ async function answerCallbackQuery(callbackQueryId, text = null, showAlert = fal
   return callApi('answerCallbackQuery', payload);
 }
 
-// Bàn phím chính
-function getMainKeyboard() {
+// Bàn phím chính cho User
+function getUserKeyboard() {
   return {
     inline_keyboard: [
       [
@@ -99,7 +105,34 @@ function getMainKeyboard() {
   };
 }
 
-// Nội dung dự đoán
+// Bàn phím đặc biệt cho Admin
+function getAdminKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🛠 Cập Nhật Link Cổng Game (/updatecong)', callback_data: 'admin_update_cong' },
+        { text: '⚠️ Đặt Báo Trì (/baotri)', callback_data: 'admin_set_baotri' }
+      ],
+      [
+        { text: '✅ Tắt Báo Trì (/tatbaotri)', callback_data: 'admin_off_baotri' },
+        { text: '🔑 Quản Lý Token Bản Quyền', callback_data: 'admin_view_tokens' }
+      ],
+      [
+        { text: '☀️ Sunwin TX', callback_data: 'pred_sunwin_tx' },
+        { text: '🔥 Hitclub TX', callback_data: 'pred_hitclub_tx' }
+      ],
+      [
+        { text: '👑 789Club TX', callback_data: 'pred_club789_tx' },
+        { text: '✈️ B52 Tài Xỉu', callback_data: 'pred_b52_tx' }
+      ],
+      [
+        { text: '📋 Xem Tất Cả Các Cổng', callback_data: 'menu_all_portals' }
+      ]
+    ]
+  };
+}
+
+// Format tin nhắn dự đoán
 function formatPredictionMessage(channelData) {
   const { channel, latest, prediction } = channelData;
   const nextNum = latest?.phien ? (parseInt(latest.phien) ? parseInt(latest.phien) + 1 : 'Kế Tiếp') : 'Kế Tiếp';
@@ -135,11 +168,175 @@ async function handleMessage(msg) {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const text = msg.text.trim();
+  const isAdmin = firebase.isAdmin(userId);
 
-  // Kiểm tra quyền từ Firebase
-  const isAuth = await firebase.checkUserAuthorized(userId);
+  // 1. XỬ LÝ LỆNH RIÊNG DÀNH CHO ADMIN
+  if (isAdmin) {
+    // Xử lý nếu admin đang trong trạng thái gửi link cập nhật cổng
+    if (adminInputState[chatId]?.action === 'awaiting_portal_url') {
+      const portalId = adminInputState[chatId].portalId;
+      delete adminInputState[chatId];
 
-  if (!isAuth) {
+      if (!text.startsWith('http://') && !text.startsWith('https://')) {
+        return sendMessage(chatId, `❌ Link không hợp lệ! Vui lòng bắt đầu bằng http:// hoặc https://`);
+      }
+
+      const updated = config.updateEndpointUrl(portalId, text);
+      if (updated) {
+        const channels = config.loadEndpoints();
+        const target = channels.find(c => c.id === portalId);
+        sendMessage(chatId, `⏳ Đang gửi ping kiểm tra kết nối link mới...`);
+        const fetchRes = await collector.fetchChannel(target);
+
+        return sendMessage(
+          chatId,
+          `
+✅ <b>CẬP NHẬT LINK THÀNH CÔNG!</b>
+━━━━━━━━━━━━━━━━━━━━
+🎮 <b>Cổng:</b> ${target.platform} (${target.gameName})
+🔗 <b>Link mới:</b> <code>${text}</code>
+📡 <b>Trạng thái:</b> ${fetchRes.ok ? '🟢 Kết Nối OK (Đã nhận phiên)' : '🔴 Chưa phản hồi'}
+━━━━━━━━━━━━━━━━━━━━
+<i>Link đã được lưu và áp dụng cho toàn bộ người dùng.</i>
+          `.trim()
+        );
+      } else {
+        return sendMessage(chatId, `❌ Không tìm thấy cổng game [${portalId}]`);
+      }
+    }
+
+    // Xử lý nếu admin đang trong trạng thái nhập nội dung bảo trì
+    if (adminInputState[chatId]?.action === 'awaiting_maintenance_msg') {
+      delete adminInputState[chatId];
+      await firebase.setMaintenance(true, text, userId);
+      return sendMessage(
+        chatId,
+        `
+⚠️ <b>ĐÃ KÍCH HOẠT CHẾ ĐỘ BẢO TRÌ!</b>
+━━━━━━━━━━━━━━━━━━━━
+📢 <b>Nội dung thông báo:</b>
+<i>"${text}"</i>
+━━━━━━━━━━━━━━━━━━━━
+<i>Người dùng thông thường khi vào bot sẽ nhận được thông báo này và tạm dừng sử dụng. Gửi /tatbaotri để mở lại.</i>
+        `.trim()
+      );
+    }
+
+    // Lệnh /baotri <thông báo>
+    if (text.startsWith('/baotri')) {
+      const parts = text.split(' ');
+      parts.shift();
+      const content = parts.join(' ').trim();
+
+      if (content.toLowerCase() === 'off' || content.toLowerCase() === 'tat') {
+        await firebase.setMaintenance(false, '', userId);
+        return sendMessage(chatId, `✅ <b>ĐÃ TẮT CHẾ ĐỘ BẢO TRÌ!</b>\nNgười dùng có thể sử dụng bot bình thường.`);
+      }
+
+      if (!content) {
+        adminInputState[chatId] = { action: 'awaiting_maintenance_msg' };
+        return sendMessage(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>\n<i>(Ví dụ: Đang bảo trì cập nhật API các cổng game, dự kiến 15 phút xong)</i>`);
+      }
+
+      await firebase.setMaintenance(true, content, userId);
+      return sendMessage(
+        chatId,
+        `
+⚠️ <b>ĐÃ KÍCH HOẠT CHẾ ĐỘ BẢO TRÌ!</b>
+━━━━━━━━━━━━━━━━━━━━
+📢 <b>Nội dung thông báo:</b>
+<i>"${content}"</i>
+━━━━━━━━━━━━━━━━━━━━
+<i>Người dùng thông thường sẽ nhận được thông báo bảo trì này. Gửi /tatbaotri khi bảo trì xong.</i>
+        `.trim()
+      );
+    }
+
+    // Lệnh /tatbaotri
+    if (text === '/tatbaotri') {
+      await firebase.setMaintenance(false, '', userId);
+      return sendMessage(chatId, `✅ <b>ĐÃ TẮT CHẾ ĐỘ BẢO TRÌ!</b>\nNgười dùng có thể truy cập bot bình thường.`);
+    }
+
+    // Lệnh /updatecong [portalId] [url]
+    if (text.startsWith('/updatecong')) {
+      const parts = text.split(' ').filter(Boolean);
+      // Nếu gõ dạng /updatecong <id> <url>
+      if (parts.length >= 3) {
+        const portalId = parts[1].trim();
+        const newUrl = parts[2].trim();
+
+        const updated = config.updateEndpointUrl(portalId, newUrl);
+        if (updated) {
+          const channels = config.loadEndpoints();
+          const target = channels.find(c => c.id === portalId);
+          collector.fetchChannel(target);
+          return sendMessage(chatId, `✅ Đã cập nhật link cho <b>${portalId}</b> thành công:\n<code>${newUrl}</code>`);
+        } else {
+          return sendMessage(chatId, `❌ Không tìm thấy cổng game mã [${portalId}]`);
+        }
+      }
+
+      // Nếu chỉ gõ /updatecong -> hiển thị danh sách cổng để chọn bấm cập nhật
+      const channels = config.loadEndpoints();
+      const rows = [];
+      channels.forEach(c => {
+        rows.push([{ text: `✏️ ${c.icon || '🎲'} ${c.platform} - ${c.gameName}`, callback_data: `admin_edit_url_${c.id}` }]);
+      });
+      rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
+
+      return sendMessage(
+        chatId,
+        `
+🛠 <b>TRUNG TÂM CẬP NHẬT LINK CỔNG GAME (DÀNH CHO ADMIN)</b>
+Bấm vào cổng game bạn muốn đổi link Cloudflare:
+        `.trim(),
+        { reply_markup: { inline_keyboard: rows } }
+      );
+    }
+  }
+
+  // 2. KIỂM TRA CHẾ ĐỘ BẢO TRÌ ĐỐI VỚI USER THƯỜNG
+  if (!isAdmin) {
+    const maintenance = await firebase.getMaintenance();
+    if (maintenance && maintenance.active) {
+      return sendMessage(
+        chatId,
+        `
+⚠️ <b>HỆ THỐNG ĐANG BẢO TRÌ ĐỂ CẬP NHẬT API</b> ⚠️
+━━━━━━━━━━━━━━━━━━━━
+📌 <b>Thông báo từ Admin:</b>
+<i>"${maintenance.message || 'Hệ thống đang được nâng cấp API các cổng game. Vui lòng quay lại sau ít phút!'}"</i>
+━━━━━━━━━━━━━━━━━━━━
+💬 <i>Mọi thắc mắc vui lòng liên hệ:</i>\n${ADMIN_CONTACT}
+        `.trim()
+      );
+    }
+  }
+
+  // 3. KIỂM TRA QUYỀN TRUY CẬP (TOKEN BẢN QUYỀN THEO THỜI GIAN THỰC)
+  const authCheck = await firebase.checkUserAuthorized(userId);
+
+  // Nếu user chưa kích hoạt HOẶC token bị xóa/hết hạn -> LẬP TỨC OUT
+  if (!authCheck.authorized) {
+    // Nếu bị xóa hoặc hết hạn
+    if (authCheck.reason === 'TOKEN_DELETED' || authCheck.reason === 'TOKEN_EXPIRED' || authCheck.reason === 'TOKEN_REVOKED') {
+      return sendMessage(
+        chatId,
+        `
+⚠️ <b>THÔNG BÁO: TOKEN CỦA BẠN ĐÃ HẾT HẠN HOẶC BỊ THU HỒI!</b>
+━━━━━━━━━━━━━━━━━━━━
+${authCheck.message || 'Bạn không thể tiếp tục sử dụng bot do token đã hết hạn hoặc bị xóa trên hệ thống.'}
+
+👉 <b>Vui lòng liên hệ Admin để mua/gia hạn token bản quyền mới:</b>
+${ADMIN_CONTACT}
+━━━━━━━━━━━━━━━━━━━━
+<i>Nếu bạn đã có mã Token mới, vui lòng gửi mã vào đây để kích hoạt lại:</i>
+        `.trim()
+      );
+    }
+
+    // Nếu chưa kích hoạt và gửi /start
     if (text === '/start') {
       return sendMessage(
         chatId,
@@ -153,12 +350,14 @@ Mỗi mã Token chỉ được kích hoạt cho <b>1 tài khoản duy nhất</b>
 👉 <b>Vui lòng gửi Mã Token của bạn vào đây để mở khóa bot:</b>
 <i>(Ví dụ: VIP-8888-9999 hoặc mã bạn nhận được từ Admin)</i>
 ━━━━━━━━━━━━━━━━━━━━
-📞 <i>Liên hệ Admin nếu bạn chưa có mã token bản quyền!</i>
+💬 <b>NẾU CHƯA CÓ TOKEN BẢN QUYỀN, VUI LÒNG LIÊN HỆ ADMIN ĐỂ MUA:</b>
+${ADMIN_CONTACT}
+━━━━━━━━━━━━━━━━━━━━
         `.trim()
       );
     }
 
-    // Kiểm tra token nhập vào
+    // Người dùng nhập mã Token để kích hoạt
     const result = await firebase.activateUserWithToken(userId, msg.from, text);
 
     if (result.success) {
@@ -175,18 +374,38 @@ Mỗi mã Token chỉ được kích hoạt cho <b>1 tài khoản duy nhất</b>
 
 👇 <b>Vui lòng chọn cổng game để bắt đầu:</b>
         `.trim(),
-        { reply_markup: getMainKeyboard() }
+        { reply_markup: getUserKeyboard() }
       );
     } else {
       return sendMessage(
         chatId,
-        `❌ <b>KÍCH HOẠT THẤT BẠI:</b>\n\n${result.message}\n\n👉 <i>Vui lòng kiểm tra lại mã hoặc liên hệ Admin để được cấp token mới.</i>`
+        `❌ <b>KÍCH HOẠT THẤT BẠI:</b>\n\n${result.message}\n\n💬 <b>Liên hệ Admin để mua token mới:</b>\n${ADMIN_CONTACT}`
       );
     }
   }
 
-  // ĐÃ KÍCH HOẠT
+  // 4. NẾU ĐÃ KÍCH HOẠT (HOẶC LÀ ADMIN)
   if (text === '/start' || text === '/menu') {
+    if (isAdmin) {
+      return sendMessage(
+        chatId,
+        `
+👑 <b>BẢNG ĐIỀU KHIỂN DÀNH CHO SUPER ADMIN</b> 👑
+━━━━━━━━━━━━━━━━━━━━
+Xin chào Sếp <b>${msg.from.first_name || 'Admin'}</b> (ID: <code>${userId}</code>)!
+Hệ thống đã nhận diện bạn là Quản trị viên cấp cao.
+
+🛠 <b>Các tính năng quản trị nhanh:</b>
+• /updatecong - Đổi link API các cổng game khi Cloudflare reset
+• /baotri &lt;nội dung&gt; - Đặt trạng thái bảo trì toàn hệ thống
+• /tatbaotri - Mở lại hệ thống cho người dùng
+
+👇 <b>Chọn thao tác hoặc xem soi cầu bên dưới:</b>
+        `.trim(),
+        { reply_markup: getAdminKeyboard() }
+      );
+    }
+
     return sendMessage(
       chatId,
       `
@@ -197,7 +416,7 @@ Hệ thống đang kết nối trực tiếp dữ liệu phiên từ hơn 15+ c�
 
 👇 <b>Chọn cổng game bạn muốn soi cầu ngay dưới đây:</b>
       `.trim(),
-      { reply_markup: getMainKeyboard() }
+      { reply_markup: getUserKeyboard() }
     );
   }
 
@@ -209,27 +428,123 @@ Hệ thống đang kết nối trực tiếp dữ liệu phiên từ hơn 15+ c�
 • /menu - Mở bảng chọn cổng game
 • Bấm vào bất kỳ nút nào để xem dự đoán phiên tiếp theo
 • Bấm <b>"Bật Báo Tự Động"</b> để bot tự động gửi tin nhắn mỗi khi nhà cái ra phiên mới
-• Dữ liệu phân tích gồm: Chuỗi Markov, Mẫu Cầu Bệt/Đảo, Hồi quy điểm số
+• Mỗi token bản quyền chỉ được dùng cho 1 tài khoản
+💬 <b>Hỗ trợ kỹ thuật:</b>\n${ADMIN_CONTACT}
       `.trim()
     );
   }
 }
 
-// Xử lý Callback nút bấm
+// Xử lý Callback nút bấm (Inline Query)
 async function handleCallbackQuery(query) {
   const chatId = query.message.chat.id;
   const userId = query.from.id;
   const data = query.data;
+  const isAdmin = firebase.isAdmin(userId);
 
-  const isAuth = await firebase.checkUserAuthorized(userId);
-  if (!isAuth) {
-    return answerCallbackQuery(query.id, 'Vui lòng gửi mã Token để kích hoạt trước!', true);
+  // 1. Kiểm tra bảo trì đối với user thường
+  if (!isAdmin) {
+    const maintenance = await firebase.getMaintenance();
+    if (maintenance && maintenance.active) {
+      return answerCallbackQuery(query.id, `Hệ thống đang bảo trì: ${maintenance.message || 'Vui lòng chờ ít phút!'}`, true);
+    }
+  }
+
+  // 2. Kiểm tra xác thực token thời gian thực (hết hạn hoặc bị xóa -> đá văng ra)
+  const authCheck = await firebase.checkUserAuthorized(userId);
+  if (!authCheck.authorized) {
+    await answerCallbackQuery(query.id, 'Token của bạn đã hết hạn hoặc bị thu hồi!', true);
+    return sendMessage(
+      chatId,
+      `
+⚠️ <b>THÔNG BÁO: TOKEN CỦA BẠN ĐÃ HẾT HẠN HOẶC BỊ THU HỒI!</b>
+━━━━━━━━━━━━━━━━━━━━
+Bạn không thể tiếp tục thực hiện thao tác do token không còn hợp lệ.
+
+💬 <b>Liên hệ Admin để mua/gia hạn token:</b>
+${ADMIN_CONTACT}
+━━━━━━━━━━━━━━━━━━━━
+      `.trim()
+    );
   }
 
   await answerCallbackQuery(query.id);
 
-  // Xem dự đoán kênh cụ thể
-  if (data.startsWith('pred_')) {
+  // Thao tác Admin: chọn sửa link cổng
+  if (data.startsWith('admin_edit_url_')) {
+    if (!isAdmin) return;
+    const portalId = data.replace('admin_edit_url_', '');
+    const channels = config.loadEndpoints();
+    const target = channels.find(c => c.id === portalId);
+
+    adminInputState[chatId] = { action: 'awaiting_portal_url', portalId };
+    return sendMessage(
+      chatId,
+      `
+✏️ <b>CẬP NHẬT LINK CHO CỔNG: [${target ? target.platform + ' - ' + target.gameName : portalId}]</b>
+━━━━━━━━━━━━━━━━━━━━
+🔗 <b>Link hiện tại:</b>
+<code>${target ? target.url : 'Chưa có'}</code>
+
+👉 <b>Hãy gửi link Cloudflare mới (bắt đầu bằng https://...):</b>
+<i>(Hoặc gõ /menu để hủy thao tác)</i>
+      `.trim()
+    );
+  }
+
+  // Thao tác Admin: danh sách cập nhật cổng
+  else if (data === 'admin_update_cong') {
+    if (!isAdmin) return;
+    const channels = config.loadEndpoints();
+    const rows = [];
+    channels.forEach(c => {
+      rows.push([{ text: `✏️ ${c.icon || '🎲'} ${c.platform} - ${c.gameName}`, callback_data: `admin_edit_url_${c.id}` }]);
+    });
+    rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
+
+    return editMessageText(chatId, query.message.message_id, '🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>', {
+      reply_markup: { inline_keyboard: rows }
+    });
+  }
+
+  // Thao tác Admin: bật bảo trì
+  else if (data === 'admin_set_baotri') {
+    if (!isAdmin) return;
+    adminInputState[chatId] = { action: 'awaiting_maintenance_msg' };
+    return sendMessage(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>\n<i>(Ví dụ: Đang cập nhật API các cổng game, dự kiến 15 phút)</i>`);
+  }
+
+  // Thao tác Admin: tắt bảo trì
+  else if (data === 'admin_off_baotri') {
+    if (!isAdmin) return;
+    await firebase.setMaintenance(false, '', userId);
+    return sendMessage(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b> Người dùng có thể sử dụng bot bình thường.`);
+  }
+
+  // Thao tác Admin: xem thống kê token
+  else if (data === 'admin_view_tokens') {
+    if (!isAdmin) return;
+    const tokens = await firebase.getAllTokens();
+    const list = Object.values(tokens);
+    const used = list.filter(t => t.used).length;
+    const free = list.length - used;
+
+    return sendMessage(
+      chatId,
+      `
+🔑 <b>THỐNG KÊ TOKEN BẢN QUYỀN TỪ FIREBASE:</b>
+━━━━━━━━━━━━━━━━━━━━
+• Tổng token: <b>${list.length}</b>
+• 🟢 Chưa dùng: <b>${free}</b>
+• 🔴 Đã kích hoạt: <b>${used}</b>
+━━━━━━━━━━━━━━━━━━━━
+💡 Để tạo thêm token hoặc xóa token, hãy mở trang web quản trị:\n👉 <b>http://localhost:3000/admin.html</b>
+      `.trim()
+    );
+  }
+
+  // Xem dự đoán kênh
+  else if (data.startsWith('pred_')) {
     const channelId = data.replace('pred_', '');
     const channelData = collector.getChannelData(channelId);
     const text = formatPredictionMessage(channelData);
@@ -275,7 +590,7 @@ async function handleCallbackQuery(query) {
     });
   }
 
-  // Danh sách tất cả cổng game
+  // Xem tất cả cổng game
   else if (data === 'menu_all_portals') {
     const channels = config.loadEndpoints();
     const rows = [];
@@ -343,9 +658,9 @@ async function handleCallbackQuery(query) {
 ━━━━━━━━━━━━━━━━━━━━
 🆔 <b>Telegram ID:</b> <code>${userId}</code>
 👤 <b>Tên:</b> ${query.from.first_name || ''} (@${query.from.username || 'Chưa đặt user'})
-🟢 <b>Trạng thái:</b> Đã kích hoạt bản quyền VIP
+🟢 <b>Trạng thái:</b> ${isAdmin ? '👑 SUPER ADMIN' : '🟢 Đã kích hoạt bản quyền VIP'}
 ━━━━━━━━━━━━━━━━━━━━
-<i>Mỗi token chỉ dùng cho 1 tài khoản duy nhất. Chúc bạn may mắn và luôn vui tươi!</i>
+💬 <b>Hỗ trợ Admin:</b>\n${ADMIN_CONTACT}
       `.trim(),
       {
         reply_markup: {
@@ -357,8 +672,9 @@ async function handleCallbackQuery(query) {
 
   // Quay lại
   else if (data === 'back_main') {
+    const keyboard = isAdmin ? getAdminKeyboard() : getUserKeyboard();
     editMessageText(chatId, query.message.message_id, '👑 <b>BẢNG ĐIỀU KHIỂN SOI CẦU TÀI XỈU VIP</b>\n\n👇 Chọn cổng game bạn muốn soi cầu:', {
-      reply_markup: getMainKeyboard()
+      reply_markup: keyboard
     });
   }
 }

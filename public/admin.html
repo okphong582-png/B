@@ -250,7 +250,7 @@
         <span class="crown">👑</span>
         <div>
           <h1 class="title-h1">TRUNG TÂM CẤP TOKEN BẢN QUYỀN</h1>
-          <p class="title-sub">Kết nối Firebase Realtime Database • Mỗi token cấp cho 1 tài khoản Telegram</p>
+          <p class="title-sub">Admin 1: <strong>@spamsmstaken</strong> (ID: <code>7769479790</code>) • Admin 2: <strong>@icebearvndev</strong> (ID: <code>8083052279</code>)</p>
         </div>
       </div>
 
@@ -269,6 +269,24 @@
         </div>
       </div>
     </header>
+
+    <!-- Maintenance Control Box -->
+    <div class="card" style="border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.05);">
+      <h2 class="card-title" style="color: #f43f5e;">⚠️ BẢO TRÌ HỆ THỐNG TELEGRAM BOT</h2>
+      <div style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 6px;">
+          <label class="label">Nội dung thông báo bảo trì gửi người dùng:</label>
+          <input type="text" id="maintenanceInput" class="input-field" value="Hệ thống đang bảo trì để cập nhật API các cổng game. Vui lòng quay lại sau ít phút!">
+        </div>
+        <button class="btn-create" id="toggleMaintenanceBtn" style="background: linear-gradient(135deg, #f43f5e, #be123c); color: #fff;">
+          BẬT BẢO TRÌ
+        </button>
+      </div>
+      <div id="maintenanceStatusText" style="font-size: 12px; margin-top: 10px; color: #94a3b8;">
+        Trạng thái: 🟢 Hoạt động bình thường
+      </div>
+    </div>
+
 
     <!-- Create Form -->
     <div class="card">
@@ -352,6 +370,43 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const tokensRef = db.ref('tokens');
+    const maintenanceRef = db.ref('system/maintenance');
+
+    let currentMaintenance = { active: false, message: '' };
+
+    // Lắng nghe trạng thái bảo trì
+    maintenanceRef.on('value', (snap) => {
+      currentMaintenance = snap.val() || { active: false, message: '' };
+      const btn = document.getElementById('toggleMaintenanceBtn');
+      const text = document.getElementById('maintenanceStatusText');
+      const input = document.getElementById('maintenanceInput');
+
+      if (currentMaintenance.active) {
+        btn.textContent = 'TẮT BẢO TRÌ';
+        btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        text.innerHTML = `Trạng thái: 🔴 <strong>ĐANG BẢO TRÌ</strong> - Thông báo: "<em>${currentMaintenance.message}</em>"`;
+        text.style.color = '#f43f5e';
+      } else {
+        btn.textContent = 'BẬT BẢO TRÌ';
+        btn.style.background = 'linear-gradient(135deg, #f43f5e, #be123c)';
+        text.innerHTML = 'Trạng thái: 🟢 <strong>HOẠT ĐỘNG BÌNH THƯỜNG</strong>';
+        text.style.color = '#10b981';
+      }
+      if (currentMaintenance.message && !input.matches(':focus')) {
+        input.value = currentMaintenance.message;
+      }
+    });
+
+    document.getElementById('toggleMaintenanceBtn').addEventListener('click', async () => {
+      const msg = document.getElementById('maintenanceInput').value.trim();
+      const willBeActive = !currentMaintenance.active;
+      await maintenanceRef.set({
+        active: willBeActive,
+        message: msg || 'Hệ thống đang bảo trì để cập nhật API các cổng game. Vui lòng quay lại sau!',
+        updated_at: new Date().toISOString()
+      });
+      showToast(willBeActive ? 'Đã kích hoạt chế độ bảo trì!' : 'Đã tắt chế độ bảo trì!');
+    });
 
     // Hàm sinh chuỗi ngẫu nhiên
     function makeRandomKey(len = 8) {
