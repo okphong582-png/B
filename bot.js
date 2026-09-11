@@ -1,15 +1,15 @@
 /**
  * TOOL TÀI XỈU VIP - TELEGRAM BOT CONTROLLER
- * Hỗ trợ phân quyền Super Admin (7769479790, 8083052279)
- * Lệnh /updatecong cập nhật API cổng game trực tiếp
- * Lệnh /baotri phát thông báo bảo trì toàn hệ thống
- * Tự động kick out lập tức khi token bị xóa hoặc hết hạn
+ * Hỗ trợ phân quyền Admin động (Thêm/xóa admin)
+ * Tạo Token trực tiếp trên Telegram (/taotoken)
+ * Tự động xóa sạch tin nhắn cũ và kick out lập tức khi hết hạn/xóa token
  * Liên hệ Admin mua token: @spamsmstaken và @icebearvndev
  */
 
 const firebase = require('./lib/firebase');
 const collector = require('./lib/collector');
 const config = require('./lib/config');
+const doithevip = require('./lib/doithevip');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8738721874:AAG22QXgkzi8tURDRWJLkmJQUCtdbIxnG2E';
 const BASE_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
@@ -19,9 +19,116 @@ const ADMIN_CONTACT = `👑 <b>Admin 1:</b> @spamsmstaken\n👑 <b>Admin 2:</b> 
 // Bộ nhớ đệm
 const notificationSubscribers = new Set();
 const adminInputState = {}; // { [adminChatId]: { action: string, portalId?: string } }
+const userCardInputState = {}; // { [chatId]: { action: string, telco: string, amount: number, packageType: string, userId: string } }
+const activeCardPollers = new Map(); // requestId -> setInterval handle
+
 let lastBroadcastSessions = {};
 let isPolling = false;
 let updateOffset = 0;
+
+function makeRandomKey(len = 8) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let res = '';
+  for (let i = 0; i < len; i++) {
+    res += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return res;
+}
+
+/**
+ * Luồng Polling kiểm tra thẻ cào ngầm khi trạng thái là PENDING (status 99)
+ */
+async function startCardPolling({ requestId, chatId, userId, userDetails, telco, code, serial, amount, packageType }) {
+  let attempts = 0;
+  const maxAttempts = 25; // 25 lần * 10s = 250s (~4 phút)
+
+  const pollInterval = setInterval(async () => {
+    attempts++;
+    try {
+      const checkRes = await doithevip.checkCard({ telco, code, serial, amount, requestId });
+
+      if (checkRes && (checkRes.status === 1 || checkRes.status === 2)) {
+        clearInterval(pollInterval);
+        activeCardPollers.delete(requestId);
+
+        const duration = (amount >= 1000000 || packageType === '30d') ? '30 Ngày' : '7 Ngày';
+        const key = `VIP-${makeRandomKey(4)}-${makeRandomKey(4)}`;
+        await firebase.createToken(key, { duration, note: `Nạp tự động thẻ ${telco} ${amount.toLocaleString('vi-VN')}đ` });
+        await firebase.activateUserWithToken(userId, userDetails, key);
+        await firebase.updateCardTransaction(requestId, {
+          status: 'SUCCESS',
+          token: key,
+          duration,
+          verified_at: new Date().toISOString()
+        });
+
+        return sendMessage(
+          chatId,
+          `
+🎉 <b>NẠP THẺ & KÍCH HOẠT TOKEN THÀNH CÔNG!</b>
+━━━━━━━━━━━━━━━━━━━━
+👤 <b>Tài khoản:</b> ${userDetails.first_name || ''} (@${userDetails.username || userId})
+💳 <b>Thẻ:</b> ${telco} ${amount.toLocaleString('vi-VN')} VNĐ
+🔑 <b>MÃ TOKEN VIP CỦA BẠN:</b> <code>${key}</code>
+⏱ <b>Thời hạn sử dụng:</b> <b>${duration}</b>
+━━━━━━━━━━━━━━━━━━━━
+✨ <i>Bot đã được kích hoạt thành công! Bấm các cổng game bên dưới để bắt đầu soi cầu:</i>
+          `.trim(),
+          { reply_markup: getUserKeyboard() }
+        );
+      }
+
+      if (checkRes && (checkRes.status === 3 || checkRes.status === 100)) {
+        clearInterval(pollInterval);
+        activeCardPollers.delete(requestId);
+
+        await firebase.updateCardTransaction(requestId, {
+          status: 'FAILED',
+          error_message: checkRes.message || 'Thẻ lỗi hoặc sai thông tin',
+          failed_at: new Date().toISOString()
+        });
+
+        return sendMessage(
+          chatId,
+          `
+❌ <b>THẺ CÀO BỊ TỪ CHỐI BỞI NHÀ MẠNG!</b>
+━━━━━━━━━━━━━━━━━━━━
+📋 <b>Mã đơn:</b> <code>${requestId}</code>
+📌 <b>Lý do:</b> ${checkRes.message || 'Mã thẻ/seri không đúng hoặc thẻ đã được sử dụng trước đó!'}
+━━━━━━━━━━━━━━━━━━━━
+👉 Vui lòng kiểm tra lại thẻ hoặc nạp thẻ khác:
+          `.trim(),
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '🔄 Nạp Lại Thẻ Khác', callback_data: 'napthe_menu' }],
+                [{ text: '💬 Liên Hệ Admin', url: 'https://t.me/spamsmstaken' }]
+              ]
+            }
+          }
+        );
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(pollInterval);
+        activeCardPollers.delete(requestId);
+        return sendMessage(
+          chatId,
+          `
+⚠️ <b>THÔNG BÁO XỬ LÝ THẺ CÀO CHẬM</b>
+━━━━━━━━━━━━━━━━━━━━
+Mã đơn: <code>${requestId}</code>
+Nhà mạng đang xử lý thẻ chậm hơn bình thường.
+Vui lòng nhắn tin kèm mã đơn cho Admin để được hỗ trợ kiểm tra và cộng quyền ngay:
+${ADMIN_CONTACT}
+          `.trim()
+        );
+      }
+    } catch (e) {}
+  }, 10000);
+
+  activeCardPollers.set(requestId, pollInterval);
+}
 
 // Gọi Telegram Bot API
 async function callApi(method, body = {}) {
@@ -41,22 +148,56 @@ async function callApi(method, body = {}) {
   }
 }
 
+// Bộ nhớ lưu ID các tin nhắn đã gửi cho từng chat để tự động xóa sạch khi hết hạn
+const userMessageHistory = {}; // { [chatId]: Set of messageId }
+
+function trackUserMessage(chatId, messageId) {
+  if (!chatId || !messageId) return;
+  if (!userMessageHistory[chatId]) userMessageHistory[chatId] = new Set();
+  userMessageHistory[chatId].add(messageId);
+  if (userMessageHistory[chatId].size > 50) {
+    const arr = Array.from(userMessageHistory[chatId]);
+    userMessageHistory[chatId] = new Set(arr.slice(-50));
+  }
+}
+
+async function cleanAllUserMessages(chatId) {
+  if (!chatId || !userMessageHistory[chatId]) return;
+  const ids = Array.from(userMessageHistory[chatId]);
+  userMessageHistory[chatId].clear();
+  for (const mid of ids) {
+    await deleteMessage(chatId, mid).catch(() => {});
+  }
+}
+
 async function sendMessage(chatId, text, options = {}) {
-  return callApi('sendMessage', {
+  const res = await callApi('sendMessage', {
     chat_id: chatId,
     text,
     parse_mode: 'HTML',
     ...options
   });
+  if (res && res.ok && res.result?.message_id) {
+    trackUserMessage(chatId, res.result.message_id);
+  }
+  return res;
 }
 
 async function editMessageText(chatId, messageId, text, options = {}) {
+  trackUserMessage(chatId, messageId);
   return callApi('editMessageText', {
     chat_id: chatId,
     message_id: messageId,
     text,
     parse_mode: 'HTML',
     ...options
+  });
+}
+
+async function deleteMessage(chatId, messageId) {
+  return callApi('deleteMessage', {
+    chat_id: chatId,
+    message_id: messageId
   });
 }
 
@@ -67,6 +208,71 @@ async function answerCallbackQuery(callbackQueryId, text = null, showAlert = fal
     payload.show_alert = showAlert;
   }
   return callApi('answerCallbackQuery', payload);
+}
+
+// Bàn phím chọn gói nạp thẻ
+function getNapThePackagesKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🌟 GÓI VIP 7 NGÀY (200.000đ)', callback_data: 'napthe_pack_7d' }
+      ],
+      [
+        { text: '👑 GÓI VIP 30 NGÀY (1.000.000đ)', callback_data: 'napthe_pack_30d' }
+      ],
+      [
+        { text: '💳 Nạp Tùy Chọn Mệnh Giá Thẻ Khác', callback_data: 'napthe_pack_custom' }
+      ],
+      [
+        { text: '🔙 Quay Lại Menu', callback_data: 'back_main' }
+      ]
+    ]
+  };
+}
+
+// Bàn phím chọn nhà mạng
+function getNapTheTelcoKeyboard(packageType) {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🔴 VIETTEL', callback_data: `napthe_telco_VIETTEL_${packageType}` },
+        { text: '🔵 MOBIFONE', callback_data: `napthe_telco_MOBIFONE_${packageType}` }
+      ],
+      [
+        { text: '🔷 VINAPHONE', callback_data: `napthe_telco_VINAPHONE_${packageType}` },
+        { text: '🟡 VIETNAMOBILE', callback_data: `napthe_telco_VIETNAMOBILE_${packageType}` }
+      ],
+      [
+        { text: '🟢 THẺ ZING', callback_data: `napthe_telco_ZING_${packageType}` },
+        { text: '🟠 THẺ GATE', callback_data: `napthe_telco_GATE_${packageType}` }
+      ],
+      [
+        { text: '🔙 Chọn Lại Gói', callback_data: 'napthe_menu' }
+      ]
+    ]
+  };
+}
+
+// Bàn phím chọn mệnh giá tùy chọn
+function getNapTheAmountKeyboard(telco, packageType) {
+  return {
+    inline_keyboard: [
+      [
+        { text: '50.000 VNĐ', callback_data: `napthe_amt_50000_${telco}_${packageType}` },
+        { text: '100.000 VNĐ', callback_data: `napthe_amt_100000_${telco}_${packageType}` }
+      ],
+      [
+        { text: '200.000 VNĐ (Gói 7 Ngày)', callback_data: `napthe_amt_200000_${telco}_${packageType}` },
+        { text: '500.000 VNĐ', callback_data: `napthe_amt_500000_${telco}_${packageType}` }
+      ],
+      [
+        { text: '1.000.000 VNĐ (Gói 30 Ngày)', callback_data: `napthe_amt_1000000_${telco}_${packageType}` }
+      ],
+      [
+        { text: '🔙 Chọn Lại Nhà Mạng', callback_data: `napthe_pack_${packageType}` }
+      ]
+    ]
+  };
 }
 
 // Bàn phím chính cho User
@@ -98,34 +304,42 @@ function getUserKeyboard() {
         { text: '🔔 Bật Báo Tự Động', callback_data: 'toggle_notify' }
       ],
       [
-        { text: '📊 Tỷ Lệ Thắng AI', callback_data: 'view_accuracy' },
+        { text: '💳 Nạp Thẻ Cào Mua Token', callback_data: 'napthe_menu' },
+        { text: '📊 Tỷ Lệ Thắng AI', callback_data: 'view_accuracy' }
+      ],
+      [
         { text: '👤 Thông Tin Bản Quyền', callback_data: 'user_info' }
       ]
     ]
   };
 }
 
-// Bàn phím đặc biệt cho Admin
+// Bàn phím Admin
 function getAdminKeyboard() {
   return {
     inline_keyboard: [
       [
-        { text: '🛠 Cập Nhật Link Cổng Game (/updatecong)', callback_data: 'admin_update_cong' },
+        { text: '⚡ Tạo Token Mới (/taotoken)', callback_data: 'admin_create_token_prompt' },
+        { text: '👑 Quản Lý Admin', callback_data: 'admin_manage_admins' }
+      ],
+      [
+        { text: '💳 Nạp Thẻ Thử Nghiệm', callback_data: 'napthe_menu' },
+        { text: '🔑 Xem Thống Kê Token', callback_data: 'admin_view_tokens' }
+      ],
+      [
+        { text: '🛠 Cập Nhật Link Cổng (/updatecong)', callback_data: 'admin_update_cong' },
         { text: '⚠️ Đặt Báo Trì (/baotri)', callback_data: 'admin_set_baotri' }
       ],
       [
         { text: '✅ Tắt Báo Trì (/tatbaotri)', callback_data: 'admin_off_baotri' },
-        { text: '🔑 Quản Lý Token Bản Quyền', callback_data: 'admin_view_tokens' }
+        { text: '☀️ Sunwin TX', callback_data: 'pred_sunwin_tx' }
       ],
       [
-        { text: '☀️ Sunwin TX', callback_data: 'pred_sunwin_tx' },
-        { text: '🔥 Hitclub TX', callback_data: 'pred_hitclub_tx' }
+        { text: '🔥 Hitclub TX', callback_data: 'pred_hitclub_tx' },
+        { text: '👑 789Club TX', callback_data: 'pred_club789_tx' }
       ],
       [
-        { text: '👑 789Club TX', callback_data: 'pred_club789_tx' },
-        { text: '✈️ B52 Tài Xỉu', callback_data: 'pred_b52_tx' }
-      ],
-      [
+        { text: '✈️ B52 Tài Xỉu', callback_data: 'pred_b52_tx' },
         { text: '📋 Xem Tất Cả Các Cổng', callback_data: 'menu_all_portals' }
       ]
     ]
@@ -170,9 +384,135 @@ async function handleMessage(msg) {
   const text = msg.text.trim();
   const isAdmin = firebase.isAdmin(userId);
 
-  // 1. XỬ LÝ LỆNH RIÊNG DÀNH CHO ADMIN
+  // 0. XỬ LÝ NHẬP MÃ THẺ & SỐ SERI
+  if (userCardInputState[chatId]?.action === 'awaiting_card') {
+    const state = userCardInputState[chatId];
+    if (text.toLowerCase() === '/cancel' || text.toLowerCase() === 'huy') {
+      delete userCardInputState[chatId];
+      return sendMessage(chatId, '✅ Đã hủy thao tác nạp thẻ cào. Gõ /menu hoặc /napthe khi bạn muốn nạp lại.');
+    }
+
+    const tokens = text.replace(/[^a-zA-Z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+    if (tokens.length < 2) {
+      return sendMessage(
+        chatId,
+        `❌ <b>Bạn cần gửi cả Mã Thẻ và Số Seri cách nhau bằng dấu cách!</b>\n\nVí dụ: <code>123456789012 10001234567890</code>\nHoặc gõ <code>/cancel</code> để hủy thao tác.`
+      );
+    }
+
+    delete userCardInputState[chatId];
+    const code = tokens[0];
+    const serial = tokens[1];
+    const { telco, amount, packageType } = state;
+    const requestId = `REQ-VIP-${Date.now()}-${userId}`;
+
+    sendMessage(
+      chatId,
+      `⏳ <b>Đang gửi thẻ [${telco} ${amount.toLocaleString('vi-VN')}đ] lên cổng gạch thẻ tự động...</b>\nVui lòng chờ trong giây lát!`
+    );
+
+    // Lưu giao dịch vào Firebase
+    await firebase.saveCardTransaction(requestId, {
+      request_id: requestId,
+      user_id: String(userId),
+      user_name: msg.from.username ? `@${msg.from.username}` : (msg.from.first_name || 'User'),
+      telco,
+      amount,
+      code: code.slice(0, 3) + '***' + code.slice(-3),
+      serial: serial.slice(0, 3) + '***' + serial.slice(-3),
+      package_type: packageType,
+      status: 'PENDING',
+      created_at: new Date().toISOString()
+    });
+
+    const res = await doithevip.sendCard({ telco, code, serial, amount, requestId });
+
+    if (res && res.status === 1) {
+      const duration = (amount >= 1000000 || packageType === '30d') ? '30 Ngày' : '7 Ngày';
+      const key = `VIP-${makeRandomKey(4)}-${makeRandomKey(4)}`;
+      await firebase.createToken(key, { duration, note: `Nạp tự động thẻ ${telco} ${amount.toLocaleString('vi-VN')}đ` });
+      await firebase.activateUserWithToken(userId, msg.from, key);
+      await firebase.updateCardTransaction(requestId, { status: 'SUCCESS', token: key, duration });
+
+      return sendMessage(
+        chatId,
+        `
+🎉 <b>NẠP THẺ & KÍCH HOẠT TOKEN THÀNH CÔNG!</b>
+━━━━━━━━━━━━━━━━━━━━
+👤 <b>Tài khoản:</b> ${msg.from.first_name || ''} (@${msg.from.username || userId})
+💳 <b>Thẻ:</b> ${telco} ${amount.toLocaleString('vi-VN')} VNĐ
+🔑 <b>MÃ TOKEN VIP:</b> <code>${key}</code>
+⏱ <b>Thời hạn sử dụng:</b> <b>${duration}</b>
+━━━━━━━━━━━━━━━━━━━━
+✨ <i>Bot đã được tự động kích hoạt! Bấm chọn cổng game bên dưới để bắt đầu soi cầu:</i>
+        `.trim(),
+        { reply_markup: getUserKeyboard() }
+      );
+    }
+
+    if (res && res.status === 99) {
+      startCardPolling({ requestId, chatId, userId, userDetails: msg.from, telco, code, serial, amount, packageType });
+
+      return sendMessage(
+        chatId,
+        `
+⏳ <b>THẺ ĐÃ ĐƯỢC TIẾP NHẬN - ĐANG CHỜ NHÀ MẠNG XỬ LÝ!</b>
+━━━━━━━━━━━━━━━━━━━━
+📋 <b>Mã đơn:</b> <code>${requestId}</code>
+📡 <b>Nhà mạng:</b> <b>${telco}</b>
+💵 <b>Mệnh giá:</b> <b>${amount.toLocaleString('vi-VN')} VNĐ</b>
+━━━━━━━━━━━━━━━━━━━━
+📡 <i>Hệ thống gạch thẻ tự động đang xử lý (thời gian khoảng 15s - 60s).</i>
+🔔 <b>Bot sẽ TỰ ĐỘNG KÍCH HOẠT và gửi mã token cho bạn ngay khi có kết quả.</b> Bạn không cần làm gì thêm!
+        `.trim()
+      );
+    }
+
+    // Thẻ lỗi
+    await firebase.updateCardTransaction(requestId, { status: 'FAILED', message: res?.message || 'Lỗi gửi thẻ' });
+    return sendMessage(
+      chatId,
+      `
+❌ <b>NẠP THẺ THẤT BẠI:</b>
+━━━━━━━━━━━━━━━━━━━━
+📌 <b>Thông báo từ nhà mạng:</b> ${res?.message || 'Mã thẻ hoặc số seri không chính xác.'}
+━━━━━━━━━━━━━━━━━━━━
+👉 <i>Vui lòng kiểm tra lại mã thẻ cào và số seri hoặc thử lại thẻ khác.</i>
+      `.trim(),
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔄 Thử Nạp Lại', callback_data: 'napthe_menu' }],
+            [{ text: '💬 Liên Hệ Admin', url: 'https://t.me/spamsmstaken' }]
+          ]
+        }
+      }
+    );
+  }
+
+  // Lệnh /napthe hoặc /muatoken
+  if (text === '/napthe' || text === '/muatoken' || text === '/napthedo') {
+    return sendMessage(
+      chatId,
+      `
+💳 <b>HỆ THỐNG NẠP THẺ CÀO BÁN TOKEN BOT TỰ ĐỘNG</b>
+━━━━━━━━━━━━━━━━━━━━
+Hỗ trợ tất cả nhà mạng: <b>Viettel, Mobifone, Vinaphone, Zing, Gate...</b>
+Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt ngay!
+
+📋 <b>BẢNG GIÁ GÓI TOKEN VIP:</b>
+• 🌟 <b>GÓI VIP 7 NGÀY:</b> <code>200.000 VNĐ</code>
+• 👑 <b>GÓI VIP 30 NGÀY:</b> <code>1.000.000 VNĐ</code>
+━━━━━━━━━━━━━━━━━━━━
+👇 <b>Chọn gói bạn muốn mua bên dưới:</b>
+      `.trim(),
+      { reply_markup: getNapThePackagesKeyboard() }
+    );
+  }
+
+  // 1. CÁC LỆNH DÀNH CHO ADMIN
   if (isAdmin) {
-    // Xử lý nếu admin đang trong trạng thái gửi link cập nhật cổng
+    // Admin đang gửi link cập nhật cổng
     if (adminInputState[chatId]?.action === 'awaiting_portal_url') {
       const portalId = adminInputState[chatId].portalId;
       delete adminInputState[chatId];
@@ -195,34 +535,146 @@ async function handleMessage(msg) {
 ━━━━━━━━━━━━━━━━━━━━
 🎮 <b>Cổng:</b> ${target.platform} (${target.gameName})
 🔗 <b>Link mới:</b> <code>${text}</code>
-📡 <b>Trạng thái:</b> ${fetchRes.ok ? '🟢 Kết Nối OK (Đã nhận phiên)' : '🔴 Chưa phản hồi'}
+📡 <b>Trạng thái:</b> ${fetchRes.ok ? '🟢 Kết Nối OK' : '🔴 Chưa phản hồi'}
 ━━━━━━━━━━━━━━━━━━━━
-<i>Link đã được lưu và áp dụng cho toàn bộ người dùng.</i>
+<i>Áp dụng ngay lập tức cho toàn bộ hệ thống.</i>
           `.trim()
         );
-      } else {
-        return sendMessage(chatId, `❌ Không tìm thấy cổng game [${portalId}]`);
       }
     }
 
-    // Xử lý nếu admin đang trong trạng thái nhập nội dung bảo trì
+    // Admin đang nhập nội dung bảo trì
     if (adminInputState[chatId]?.action === 'awaiting_maintenance_msg') {
       delete adminInputState[chatId];
       await firebase.setMaintenance(true, text, userId);
-      return sendMessage(
-        chatId,
-        `
-⚠️ <b>ĐÃ KÍCH HOẠT CHẾ ĐỘ BẢO TRÌ!</b>
-━━━━━━━━━━━━━━━━━━━━
-📢 <b>Nội dung thông báo:</b>
-<i>"${text}"</i>
-━━━━━━━━━━━━━━━━━━━━
-<i>Người dùng thông thường khi vào bot sẽ nhận được thông báo này và tạm dừng sử dụng. Gửi /tatbaotri để mở lại.</i>
-        `.trim()
-      );
+      return sendMessage(chatId, `⚠️ <b>ĐÃ KÍCH HOẠT BẢO TRÌ:</b>\n<i>"${text}"</i>`);
     }
 
-    // Lệnh /baotri <thông báo>
+    // Lệnh tạo token: /taotoken [thời hạn] [ghi chú]
+    if (text.startsWith('/taotoken')) {
+      const parts = text.split(' ').filter(Boolean);
+
+      // Nếu chỉ gõ /taotoken mà không truyền tham số -> Hiện menu chọn nhanh
+      if (parts.length === 1 || parts[1]?.toLowerCase() === 'help') {
+        const keyboard = {
+          inline_keyboard: [
+            [
+              { text: '⚡ 1 Ngày (Dùng thử)', callback_data: 'admin_gen_token_1d' },
+              { text: '⚡ 3 Ngày', callback_data: 'admin_gen_token_3d' }
+            ],
+            [
+              { text: '⚡ 7 Ngày (1 Tuần)', callback_data: 'admin_gen_token_7d' },
+              { text: '⚡ 30 Ngày (1 Tháng)', callback_data: 'admin_gen_token_30d' }
+            ],
+            [
+              { text: '👑 Vĩnh Viễn (Trọn đời)', callback_data: 'admin_gen_token_forever' }
+            ],
+            [
+              { text: '🔙 Quay Lại Menu', callback_data: 'back_main' }
+            ]
+          ]
+        };
+
+        return sendMessage(
+          chatId,
+          `
+⚡ <b>TRUNG TÂM TẠO TOKEN BẢN QUYỀN TRỰC TIẾP TRÊN BOT</b>
+━━━━━━━━━━━━━━━━━━━━
+👉 <b>Cách 1:</b> Bấm chọn thời hạn cần tạo ở các nút bấm bên dưới.
+👉 <b>Cách 2:</b> Gõ lệnh nhanh: <code>/taotoken &lt;thời hạn&gt; &lt;ghi chú&gt;</code>
+<i>Ví dụ:</i>
+• <code>/taotoken 1d Khach_Dung_Thu</code>
+• <code>/taotoken 7d Khach_Zalo</code>
+• <code>/taotoken 30d VIP_0988xxx</code>
+• <code>/taotoken forever VIP_TRON_DOI</code>
+━━━━━━━━━━━━━━━━━━━━
+          `.trim(),
+          { reply_markup: keyboard }
+        );
+      }
+
+      let duration = '30 Ngày';
+      let note = 'Tạo bởi Admin Telegram';
+
+      if (parts[1]) {
+        const p1 = parts[1].toLowerCase();
+        if (p1.includes('1') || p1 === '1d' || p1 === '1ngay') duration = '1 Ngày';
+        else if (p1.includes('3') || p1 === '3d' || p1 === '3ngay') duration = '3 Ngày';
+        else if (p1.includes('7') || p1 === '7d' || p1 === '7ngay' || p1.includes('tuan')) duration = '7 Ngày';
+        else if (p1.includes('30') || p1 === '30d' || p1 === '30ngay' || p1.includes('thang')) duration = '30 Ngày';
+        else if (p1.includes('vinh') || p1 === 'forever' || p1.includes('tron')) duration = 'Vĩnh viễn';
+        else duration = parts[1];
+      }
+      if (parts[2]) {
+        note = parts.slice(2).join(' ');
+      }
+
+      const key = `VIP-${makeRandomKey(4)}-${makeRandomKey(4)}`;
+      const res = await firebase.createToken(key, { duration, note });
+
+      if (res.success) {
+        return sendMessage(
+          chatId,
+          `
+✅ <b>TẠO TOKEN THÀNH CÔNG!</b>
+━━━━━━━━━━━━━━━━━━━━
+🔑 <b>Mã Token:</b> <code>${key}</code>
+⏱ <b>Thời hạn:</b> <b>${duration}</b>
+📝 <b>Ghi chú:</b> ${note}
+━━━━━━━━━━━━━━━━━━━━
+📋 <b>Tin nhắn mẫu gửi khách (Chạm để sao chép):</b>
+<code>Chào bạn, đây là mã Token bản quyền kích hoạt bot:</code>
+<code>${key}</code>
+<code>👉 Mở bot @spamsmslol_bot gửi mã này để kích hoạt nhé!</code>
+          `.trim(),
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '⚡ Tạo Thêm Token Khác', callback_data: 'admin_create_token_prompt' }],
+                [{ text: '🔙 Quay Lại Menu', callback_data: 'back_main' }]
+              ]
+            }
+          }
+        );
+      } else {
+        return sendMessage(chatId, `❌ Lỗi tạo token: ${res.error}`);
+      }
+    }
+
+    // Lệnh thêm admin: /addadmin <id> <tên>
+    if (text.startsWith('/addadmin')) {
+      const parts = text.split(' ').filter(Boolean);
+      if (parts.length < 2) {
+        return sendMessage(chatId, `👉 Cú pháp: <code>/addadmin &lt;telegram_id&gt; &lt;tên_admin&gt;</code>\nVí dụ: <code>/addadmin 123456789 AdminPro</code>`);
+      }
+      const newAdminId = parts[1].trim();
+      const adminName = parts.slice(2).join(' ') || `Admin ${newAdminId}`;
+      const addRes = await firebase.addAdmin(newAdminId, { name: adminName });
+
+      if (addRes.success) {
+        return sendMessage(chatId, `✅ Đã cấp quyền Super Admin cho tài khoản ID: <code>${newAdminId}</code> (${adminName})`);
+      } else {
+        return sendMessage(chatId, `❌ Thất bại: ${addRes.error}`);
+      }
+    }
+
+    // Lệnh gỡ admin (chuyển thành user thường): /deladmin <id>
+    if (text.startsWith('/deladmin')) {
+      const parts = text.split(' ').filter(Boolean);
+      if (parts.length < 2) {
+        return sendMessage(chatId, `👉 Cú pháp: <code>/deladmin &lt;telegram_id&gt;</code>`);
+      }
+      const targetId = parts[1].trim();
+      const delRes = await firebase.removeAdmin(targetId);
+
+      if (delRes.success) {
+        return sendMessage(chatId, `✅ Đã chuyển tài khoản ID <code>${targetId}</code> về người dùng thường.`);
+      } else {
+        return sendMessage(chatId, `❌ Không thể xóa: ${delRes.error}`);
+      }
+    }
+
+    // Lệnh /baotri
     if (text.startsWith('/baotri')) {
       const parts = text.split(' ');
       parts.shift();
@@ -230,54 +682,26 @@ async function handleMessage(msg) {
 
       if (content.toLowerCase() === 'off' || content.toLowerCase() === 'tat') {
         await firebase.setMaintenance(false, '', userId);
-        return sendMessage(chatId, `✅ <b>ĐÃ TẮT CHẾ ĐỘ BẢO TRÌ!</b>\nNgười dùng có thể sử dụng bot bình thường.`);
+        return sendMessage(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b> Người dùng có thể sử dụng bình thường.`);
       }
 
       if (!content) {
         adminInputState[chatId] = { action: 'awaiting_maintenance_msg' };
-        return sendMessage(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>\n<i>(Ví dụ: Đang bảo trì cập nhật API các cổng game, dự kiến 15 phút xong)</i>`);
+        return sendMessage(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>`);
       }
 
       await firebase.setMaintenance(true, content, userId);
-      return sendMessage(
-        chatId,
-        `
-⚠️ <b>ĐÃ KÍCH HOẠT CHẾ ĐỘ BẢO TRÌ!</b>
-━━━━━━━━━━━━━━━━━━━━
-📢 <b>Nội dung thông báo:</b>
-<i>"${content}"</i>
-━━━━━━━━━━━━━━━━━━━━
-<i>Người dùng thông thường sẽ nhận được thông báo bảo trì này. Gửi /tatbaotri khi bảo trì xong.</i>
-        `.trim()
-      );
+      return sendMessage(chatId, `⚠️ <b>ĐÃ BẬT BẢO TRÌ:</b> "${content}"`);
     }
 
     // Lệnh /tatbaotri
     if (text === '/tatbaotri') {
       await firebase.setMaintenance(false, '', userId);
-      return sendMessage(chatId, `✅ <b>ĐÃ TẮT CHẾ ĐỘ BẢO TRÌ!</b>\nNgười dùng có thể truy cập bot bình thường.`);
+      return sendMessage(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b>`);
     }
 
-    // Lệnh /updatecong [portalId] [url]
+    // Lệnh /updatecong
     if (text.startsWith('/updatecong')) {
-      const parts = text.split(' ').filter(Boolean);
-      // Nếu gõ dạng /updatecong <id> <url>
-      if (parts.length >= 3) {
-        const portalId = parts[1].trim();
-        const newUrl = parts[2].trim();
-
-        const updated = config.updateEndpointUrl(portalId, newUrl);
-        if (updated) {
-          const channels = config.loadEndpoints();
-          const target = channels.find(c => c.id === portalId);
-          collector.fetchChannel(target);
-          return sendMessage(chatId, `✅ Đã cập nhật link cho <b>${portalId}</b> thành công:\n<code>${newUrl}</code>`);
-        } else {
-          return sendMessage(chatId, `❌ Không tìm thấy cổng game mã [${portalId}]`);
-        }
-      }
-
-      // Nếu chỉ gõ /updatecong -> hiển thị danh sách cổng để chọn bấm cập nhật
       const channels = config.loadEndpoints();
       const rows = [];
       channels.forEach(c => {
@@ -285,18 +709,13 @@ async function handleMessage(msg) {
       });
       rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
 
-      return sendMessage(
-        chatId,
-        `
-🛠 <b>TRUNG TÂM CẬP NHẬT LINK CỔNG GAME (DÀNH CHO ADMIN)</b>
-Bấm vào cổng game bạn muốn đổi link Cloudflare:
-        `.trim(),
-        { reply_markup: { inline_keyboard: rows } }
-      );
+      return sendMessage(chatId, `🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>`, {
+        reply_markup: { inline_keyboard: rows }
+      });
     }
   }
 
-  // 2. KIỂM TRA CHẾ ĐỘ BẢO TRÌ ĐỐI VỚI USER THƯỜNG
+  // 2. KIỂM TRA BẢO TRÌ VỚI USER THƯỜNG
   if (!isAdmin) {
     const maintenance = await firebase.getMaintenance();
     if (maintenance && maintenance.active) {
@@ -314,12 +733,11 @@ Bấm vào cổng game bạn muốn đổi link Cloudflare:
     }
   }
 
-  // 3. KIỂM TRA QUYỀN TRUY CẬP (TOKEN BẢN QUYỀN THEO THỜI GIAN THỰC)
+  // 3. KIỂM TRA QUYỀN TRUY CẬP (TOKEN BẢN QUYỀN)
   const authCheck = await firebase.checkUserAuthorized(userId);
 
-  // Nếu user chưa kích hoạt HOẶC token bị xóa/hết hạn -> LẬP TỨC OUT
+  // Nếu user không hợp lệ (Chưa nhập token, hoặc Token đã hết hạn / bị xóa)
   if (!authCheck.authorized) {
-    // Nếu bị xóa hoặc hết hạn
     if (authCheck.reason === 'TOKEN_DELETED' || authCheck.reason === 'TOKEN_EXPIRED' || authCheck.reason === 'TOKEN_REVOKED') {
       return sendMessage(
         chatId,
@@ -328,15 +746,29 @@ Bấm vào cổng game bạn muốn đổi link Cloudflare:
 ━━━━━━━━━━━━━━━━━━━━
 ${authCheck.message || 'Bạn không thể tiếp tục sử dụng bot do token đã hết hạn hoặc bị xóa trên hệ thống.'}
 
-👉 <b>Vui lòng liên hệ Admin để mua/gia hạn token bản quyền mới:</b>
-${ADMIN_CONTACT}
+💳 <b>GIA HẠN TỰ ĐỘNG BẰNG THẺ CÀO 24/7:</b>
+• 🌟 <b>Gói VIP 7 Ngày:</b> <code>200.000 VNĐ</code>
+• 👑 <b>Gói VIP 30 Ngày:</b> <code>1.000.000 VNĐ</code>
+<i>Hệ thống tự động duyệt thẻ và kích hoạt lại bot ngay lập tức!</i>
 ━━━━━━━━━━━━━━━━━━━━
-<i>Nếu bạn đã có mã Token mới, vui lòng gửi mã vào đây để kích hoạt lại:</i>
-        `.trim()
+👉 <b>Hoặc liên hệ Admin để mua/gia hạn token:</b>
+${ADMIN_CONTACT}
+        `.trim(),
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '💳 NẠP THẺ GIA HẠN TOKEN NGAY', callback_data: 'napthe_menu' }],
+              [
+                { text: '🌟 Gói 7 Ngày (200k)', callback_data: 'napthe_pack_7d' },
+                { text: '👑 Gói 30 Ngày (1M)', callback_data: 'napthe_pack_30d' }
+              ],
+              [{ text: '💬 Liên Hệ Admin', url: 'https://t.me/spamsmstaken' }]
+            ]
+          }
+        }
       );
     }
 
-    // Nếu chưa kích hoạt và gửi /start
     if (text === '/start') {
       return sendMessage(
         chatId,
@@ -347,19 +779,33 @@ ${ADMIN_CONTACT}
 Hệ thống bot được bảo vệ bằng Token do <b>Admin</b> cấp phép.
 Mỗi mã Token chỉ được kích hoạt cho <b>1 tài khoản duy nhất</b>.
 
-👉 <b>Vui lòng gửi Mã Token của bạn vào đây để mở khóa bot:</b>
-<i>(Ví dụ: VIP-8888-9999 hoặc mã bạn nhận được từ Admin)</i>
+👉 <b>Nếu đã có Token:</b> Hãy gửi mã vào đây để mở khóa bot!
 ━━━━━━━━━━━━━━━━━━━━
-💬 <b>NẾU CHƯA CÓ TOKEN BẢN QUYỀN, VUI LÒNG LIÊN HỆ ADMIN ĐỂ MUA:</b>
+💳 <b>MUA TOKEN TỰ ĐỘNG BẰNG THẺ CÀO 24/7:</b>
+• 🌟 <b>Gói VIP 7 Ngày:</b> <code>200.000 VNĐ</code>
+• 👑 <b>Gói VIP 30 Ngày:</b> <code>1.000.000 VNĐ</code>
+<i>Duyệt thẻ tự động qua cổng gạch thẻ, cấp token và mở khóa bot tức thì!</i>
+━━━━━━━━━━━━━━━━━━━━
+💬 <b>Hoặc liên hệ Admin để mua trực tiếp:</b>
 ${ADMIN_CONTACT}
-━━━━━━━━━━━━━━━━━━━━
-        `.trim()
+        `.trim(),
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '💳 NẠP THẺ MUA TOKEN TỰ ĐỘNG', callback_data: 'napthe_menu' }],
+              [
+                { text: '🌟 Mua Gói 7 Ngày (200k)', callback_data: 'napthe_pack_7d' },
+                { text: '👑 Mua Gói 30 Ngày (1M)', callback_data: 'napthe_pack_30d' }
+              ],
+              [{ text: '💬 Nhắn Tin Admin Mua Mã', url: 'https://t.me/spamsmstaken' }]
+            ]
+          }
+        }
       );
     }
 
-    // Người dùng nhập mã Token để kích hoạt
+    // Nhập token kích hoạt
     const result = await firebase.activateUserWithToken(userId, msg.from, text);
-
     if (result.success) {
       return sendMessage(
         chatId,
@@ -370,16 +816,16 @@ ${ADMIN_CONTACT}
 🔑 <b>Mã Token:</b> <code>${text.toUpperCase()}</code>
 ⏱ <b>Thời hạn:</b> ${result.tokenData?.duration || 'Vĩnh viễn'}
 ━━━━━━━━━━━━━━━━━━━━
-🎉 Chào mừng bạn! Bot đã sẵn sàng phân tích và soi cầu tất cả các cổng game trực tiếp.
+🎉 Chào mừng bạn! Bot đã sẵn sàng soi cầu tất cả các cổng game.
 
-👇 <b>Vui lòng chọn cổng game để bắt đầu:</b>
+👇 <b>Chọn cổng game bên dưới để bắt đầu:</b>
         `.trim(),
         { reply_markup: getUserKeyboard() }
       );
     } else {
       return sendMessage(
         chatId,
-        `❌ <b>KÍCH HOẠT THẤT BẠI:</b>\n\n${result.message}\n\n💬 <b>Liên hệ Admin để mua token mới:</b>\n${ADMIN_CONTACT}`
+        `❌ <b>KÍCH HOẠT THẤT BẠI:</b>\n\n${result.message}\n\n💬 <b>Liên hệ Admin để mua token:</b>\n${ADMIN_CONTACT}`
       );
     }
   }
@@ -395,11 +841,6 @@ ${ADMIN_CONTACT}
 Xin chào Sếp <b>${msg.from.first_name || 'Admin'}</b> (ID: <code>${userId}</code>)!
 Hệ thống đã nhận diện bạn là Quản trị viên cấp cao.
 
-🛠 <b>Các tính năng quản trị nhanh:</b>
-• /updatecong - Đổi link API các cổng game khi Cloudflare reset
-• /baotri &lt;nội dung&gt; - Đặt trạng thái bảo trì toàn hệ thống
-• /tatbaotri - Mở lại hệ thống cho người dùng
-
 👇 <b>Chọn thao tác hoặc xem soi cầu bên dưới:</b>
         `.trim(),
         { reply_markup: getAdminKeyboard() }
@@ -412,7 +853,7 @@ Hệ thống đã nhận diện bạn là Quản trị viên cấp cao.
 👑 <b>BẢNG ĐIỀU KHIỂN SOI CẦU TÀI XỈU VIP</b> 👑
 ━━━━━━━━━━━━━━━━━━━━
 Xin chào <b>${msg.from.first_name || 'VIP'}</b>!
-Hệ thống đang kết nối trực tiếp dữ liệu phiên từ hơn 15+ cổng game.
+Dữ liệu đang đồng bộ trực tiếp hơn 15+ cổng game.
 
 👇 <b>Chọn cổng game bạn muốn soi cầu ngay dưới đây:</b>
       `.trim(),
@@ -426,18 +867,18 @@ Hệ thống đang kết nối trực tiếp dữ liệu phiên từ hơn 15+ c�
       `
 📖 <b>HƯỚNG DẪN SỬ DỤNG BOT:</b>
 • /menu - Mở bảng chọn cổng game
-• Bấm vào bất kỳ nút nào để xem dự đoán phiên tiếp theo
-• Bấm <b>"Bật Báo Tự Động"</b> để bot tự động gửi tin nhắn mỗi khi nhà cái ra phiên mới
-• Mỗi token bản quyền chỉ được dùng cho 1 tài khoản
-💬 <b>Hỗ trợ kỹ thuật:</b>\n${ADMIN_CONTACT}
+• Bấm nút cổng game để xem dự đoán phiên tiếp theo
+• Bấm <b>"Bật Báo Tự Động"</b> để bot tự động gửi tin khi có phiên mới
+💬 <b>Hỗ trợ Admin:</b>\n${ADMIN_CONTACT}
       `.trim()
     );
   }
 }
 
-// Xử lý Callback nút bấm (Inline Query)
+// Xử lý Callback nút bấm (Inline Buttons)
 async function handleCallbackQuery(query) {
   const chatId = query.message.chat.id;
+  const messageId = query.message.message_id;
   const userId = query.from.id;
   const data = query.data;
   const isAdmin = firebase.isAdmin(userId);
@@ -450,28 +891,265 @@ async function handleCallbackQuery(query) {
     }
   }
 
-  // 2. Kiểm tra xác thực token thời gian thực (hết hạn hoặc bị xóa -> đá văng ra)
+  // 2. KIỂM TRA QUYỀN TRUY CẬP REALTIME
+  // NẾU TOKEN HẾT HẠN HOẶC BỊ XÓA -> TỰ ĐỘNG XÓA TIN NHẮN ĐANG BẤM, XÓA TOÀN BỘ TIN NHẮN CŨ & KICK OUT NGAY!
+  // (Ngoại trừ các nút bấm nạp thẻ mua token để người dùng có thể mua bản quyền tự động)
   const authCheck = await firebase.checkUserAuthorized(userId);
-  if (!authCheck.authorized) {
-    await answerCallbackQuery(query.id, 'Token của bạn đã hết hạn hoặc bị thu hồi!', true);
+  if (!authCheck.authorized && !data.startsWith('napthe_')) {
+    await answerCallbackQuery(query.id, '❌ Token đã hết hạn hoặc bị xóa! Toàn bộ tin nhắn đã bị vô hiệu hóa.', true);
+    
+    // Tự động xóa ngay tin nhắn cũ mà user vừa nhấn vào
+    await deleteMessage(chatId, messageId).catch(() => {});
+
+    // Tự động xóa toàn bộ danh sách các tin nhắn cũ của bot trong chat này
+    await cleanAllUserMessages(chatId);
+
+    // Xóa khỏi danh sách nhận thông báo tự động
+    notificationSubscribers.delete(chatId);
+
+    // Gửi cảnh báo kick-out duy nhất 1 lần
     return sendMessage(
       chatId,
       `
-⚠️ <b>THÔNG BÁO: TOKEN CỦA BẠN ĐÃ HẾT HẠN HOẶC BỊ THU HỒI!</b>
+⚠️ <b>THÔNG BÁO: TÀI KHOẢN ĐÃ HẾT HẠN HOẶC BỊ THU HỒI TOKEN!</b>
 ━━━━━━━━━━━━━━━━━━━━
-Bạn không thể tiếp tục thực hiện thao tác do token không còn hợp lệ.
+Toàn bộ tin nhắn và nút soi cầu cũ đã tự động bị xóa sạch.
+Nếu bạn bấm vào bất kỳ tin nhắn cũ nào cũng không còn tác dụng.
 
-💬 <b>Liên hệ Admin để mua/gia hạn token:</b>
-${ADMIN_CONTACT}
+💳 <b>GIA HẠN TỰ ĐỘNG BẰNG THẺ CÀO 24/7:</b>
+• 🌟 <b>Gói VIP 7 Ngày:</b> <code>200.000 VNĐ</code>
+• 👑 <b>Gói VIP 30 Ngày:</b> <code>1.000.000 VNĐ</code>
 ━━━━━━━━━━━━━━━━━━━━
-      `.trim()
+👉 <b>Hoặc liên hệ Admin để mua/gia hạn Token mới:</b>
+${ADMIN_CONTACT}
+      `.trim(),
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '💳 NẠP THẺ GIA HẠN TOKEN', callback_data: 'napthe_menu' }],
+            [{ text: '💬 Liên Hệ Admin', url: 'https://t.me/spamsmstaken' }]
+          ]
+        }
+      }
     );
   }
 
   await answerCallbackQuery(query.id);
 
-  // Thao tác Admin: chọn sửa link cổng
-  if (data.startsWith('admin_edit_url_')) {
+  // ================= NẠP THẺ CÀO TỰ ĐỘNG (DOITHEVIP) =================
+  if (data === 'napthe_menu') {
+    return sendMessage(
+      chatId,
+      `
+💳 <b>HỆ THỐNG NẠP THẺ CÀO BÁN TOKEN BOT TỰ ĐỘNG 24/7</b>
+━━━━━━━━━━━━━━━━━━━━
+⚡ Gạch thẻ tự động siêu tốc qua cổng <b>DoiTheVip.com</b> (15s - 45s)
+🎁 Tự động kích hoạt bot và cấp mã token ngay khi thẻ đúng!
+
+📋 <b>BẢNG GIÁ GÓI TOKEN VIP:</b>
+• 🌟 <b>GÓI VIP 7 NGÀY:</b> <code>200.000 VNĐ</code>
+• 👑 <b>GÓI VIP 30 NGÀY:</b> <code>1.000.000 VNĐ</code>
+━━━━━━━━━━━━━━━━━━━━
+👇 <b>Bấm chọn gói bạn muốn nạp bên dưới:</b>
+      `.trim(),
+      { reply_markup: getNapThePackagesKeyboard() }
+    );
+  }
+
+  else if (data === 'napthe_pack_7d' || data === 'napthe_pack_30d' || data === 'napthe_pack_custom') {
+    let packName = '7 Ngày (200.000đ)';
+    let packType = '7d';
+    if (data === 'napthe_pack_30d') {
+      packName = '30 Ngày (1.000.000đ)';
+      packType = '30d';
+    } else if (data === 'napthe_pack_custom') {
+      packName = 'Tùy Chọn Mệnh Giá';
+      packType = 'custom';
+    }
+
+    return sendMessage(
+      chatId,
+      `
+📡 <b>CHỌN NHÀ MẠNG CHO [GÓI ${packName}]</b>
+━━━━━━━━━━━━━━━━━━━━
+Hỗ trợ tất cả các nhà mạng và thẻ game:
+• Viettel, Mobifone, Vinaphone, Vietnamobile
+• Thẻ Zing, Thẻ Gate
+━━━━━━━━━━━━━━━━━━━━
+👇 <b>Bấm chọn loại thẻ bạn đang có:</b>
+      `.trim(),
+      { reply_markup: getNapTheTelcoKeyboard(packType) }
+    );
+  }
+
+  else if (data.startsWith('napthe_telco_')) {
+    const parts = data.replace('napthe_telco_', '').split('_');
+    const telco = parts[0];
+    const packageType = parts[1] || '7d';
+
+    if (packageType === 'custom') {
+      return sendMessage(
+        chatId,
+        `
+💵 <b>CHỌN MỆNH GIÁ THẺ [${telco}] CỦA BẠN:</b>
+━━━━━━━━━━━━━━━━━━━━
+<i>Lưu ý: Bạn cần chọn đúng mệnh giá thẻ để nhà mạng duyệt nhanh nhất!</i>
+        `.trim(),
+        { reply_markup: getNapTheAmountKeyboard(telco, packageType) }
+      );
+    }
+
+    const amount = packageType === '30d' ? 1000000 : 200000;
+    const packTitle = packageType === '30d' ? 'VIP 30 Ngày (1.000.000 VNĐ)' : 'VIP 7 Ngày (200.000 VNĐ)';
+
+    userCardInputState[chatId] = {
+      action: 'awaiting_card',
+      telco,
+      amount,
+      packageType,
+      userId
+    };
+
+    return sendMessage(
+      chatId,
+      `
+💳 <b>BƯỚC CUỐI: GỬI MÃ THẺ & SỐ SERI</b>
+━━━━━━━━━━━━━━━━━━━━
+🎁 <b>Gói đăng ký:</b> <b>${packTitle}</b>
+📡 <b>Nhà mạng:</b> <b>${telco}</b>
+💵 <b>Mệnh giá khai báo:</b> <b>${amount.toLocaleString('vi-VN')} VNĐ</b>
+━━━━━━━━━━━━━━━━━━━━
+👉 <b>Hãy gửi tin nhắn chứa Mã Thẻ và Số Seri:</b>
+<code>MÃ_THẺ SỐ_SERI</code>
+<i>(Ví dụ: <code>123456789012 10001234567890</code> - cách nhau bởi dấu cách)</i>
+━━━━━━━━━━━━━━━━━━━━
+<i>Gõ /cancel nếu bạn muốn hủy bỏ thao tác này.</i>
+      `.trim()
+    );
+  }
+
+  else if (data.startsWith('napthe_amt_')) {
+    const parts = data.replace('napthe_amt_', '').split('_');
+    const amount = parseInt(parts[0]) || 200000;
+    const telco = parts[1] || 'VIETTEL';
+    const packageType = parts[2] || 'custom';
+
+    userCardInputState[chatId] = {
+      action: 'awaiting_card',
+      telco,
+      amount,
+      packageType,
+      userId
+    };
+
+    const targetDuration = amount >= 1000000 ? '30 Ngày' : (amount >= 200000 ? '7 Ngày' : '1 Ngày');
+
+    return sendMessage(
+      chatId,
+      `
+💳 <b>BƯỚC CUỐI: GỬI MÃ THẺ & SỐ SERI</b>
+━━━━━━━━━━━━━━━━━━━━
+📡 <b>Nhà mạng:</b> <b>${telco}</b>
+💵 <b>Mệnh giá:</b> <b>${amount.toLocaleString('vi-VN')} VNĐ</b>
+🎁 <b>Gói nhận được:</b> <b>${targetDuration}</b>
+━━━━━━━━━━━━━━━━━━━━
+👉 <b>Hãy gửi tin nhắn chứa Mã Thẻ và Số Seri:</b>
+<code>MÃ_THẺ SỐ_SERI</code>
+<i>(Ví dụ: <code>123456789012 10001234567890</code> - cách nhau bởi dấu cách)</i>
+━━━━━━━━━━━━━━━━━━━━
+<i>Gõ /cancel nếu bạn muốn hủy bỏ thao tác này.</i>
+      `.trim()
+    );
+  }
+
+  // ================= ADMIN ACTIONS =================
+  // Tạo token: chọn thời hạn
+  else if (data === 'admin_create_token_prompt') {
+    if (!isAdmin) return;
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: '⚡ 1 Ngày (Dùng thử)', callback_data: 'admin_gen_token_1d' },
+          { text: '⚡ 3 Ngày', callback_data: 'admin_gen_token_3d' }
+        ],
+        [
+          { text: '⚡ 7 Ngày (1 Tuần)', callback_data: 'admin_gen_token_7d' },
+          { text: '⚡ 30 Ngày (1 Tháng)', callback_data: 'admin_gen_token_30d' }
+        ],
+        [
+          { text: '👑 Vĩnh Viễn (Trọn đời)', callback_data: 'admin_gen_token_forever' }
+        ],
+        [
+          { text: '🔙 Quay Lại', callback_data: 'back_main' }
+        ]
+      ]
+    };
+
+    return editMessageText(chatId, messageId, '⚡ <b>CHỌN THỜI HẠN TOKEN CẦN TẠO:</b>', {
+      reply_markup: keyboard
+    });
+  }
+
+  else if (data.startsWith('admin_gen_token_')) {
+    if (!isAdmin) return;
+    let duration = '30 Ngày';
+    if (data === 'admin_gen_token_1d') duration = '1 Ngày';
+    else if (data === 'admin_gen_token_3d') duration = '3 Ngày';
+    else if (data === 'admin_gen_token_7d') duration = '7 Ngày';
+    else if (data === 'admin_gen_token_30d') duration = '30 Ngày';
+    else if (data === 'admin_gen_token_forever') duration = 'Vĩnh viễn';
+
+    const key = `VIP-${makeRandomKey(4)}-${makeRandomKey(4)}`;
+    await firebase.createToken(key, { duration, note: `Tạo qua Telegram bởi Admin ${userId}` });
+
+    return sendMessage(
+      chatId,
+      `
+✅ <b>ĐÃ TẠO MÃ TOKEN THÀNH CÔNG!</b>
+━━━━━━━━━━━━━━━━━━━━
+🔑 <b>Mã Token:</b> <code>${key}</code>
+⏱ <b>Thời hạn:</b> <b>${duration}</b>
+━━━━━━━━━━━━━━━━━━━━
+📋 <b>Nội dung gửi khách:</b>
+<code>Chào bạn, mã Token kích hoạt bot của bạn là:</code>
+<code>${key}</code>
+<code>👉 Vào bot @spamsmslol_bot gửi mã trên để kích hoạt nhé!</code>
+      `.trim(),
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '⚡ Tạo Thêm Mã Khác', callback_data: 'admin_create_token_prompt' }],
+            [{ text: '🔙 Quay Lại Menu', callback_data: 'back_main' }]
+          ]
+        }
+      }
+    );
+  }
+
+  // Quản lý Admin
+  else if (data === 'admin_manage_admins') {
+    if (!isAdmin) return;
+    const adminsObj = await firebase.getAllAdmins();
+    const list = Object.values(adminsObj);
+
+    let text = `👑 <b>DANH SÁCH SUPER ADMIN HIỆN TẠI:</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
+    list.forEach(a => {
+      text += `• <b>${a.name || a.username || 'Admin'}</b> (ID: <code>${a.id}</code>) - ${a.role || 'Admin'}\n`;
+    });
+    text += `━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `👉 <b>Để thêm Admin mới:</b> <code>/addadmin &lt;id&gt; &lt;tên&gt;</code>\n`;
+    text += `👉 <b>Để xóa quyền Admin:</b> <code>/deladmin &lt;id&gt;</code>\n`;
+    text += `<i>(Bạn cũng có thể thêm/xóa Admin trực tiếp trên trang web http://localhost:3000/admin.html)</i>`;
+
+    return sendMessage(chatId, text, {
+      reply_markup: {
+        inline_keyboard: [[{ text: '🔙 Quay Lại', callback_data: 'back_main' }]]
+      }
+    });
+  }
+
+  // Thao tác sửa link cổng
+  else if (data.startsWith('admin_edit_url_')) {
     if (!isAdmin) return;
     const portalId = data.replace('admin_edit_url_', '');
     const channels = config.loadEndpoints();
@@ -492,7 +1170,6 @@ ${ADMIN_CONTACT}
     );
   }
 
-  // Thao tác Admin: danh sách cập nhật cổng
   else if (data === 'admin_update_cong') {
     if (!isAdmin) return;
     const channels = config.loadEndpoints();
@@ -502,26 +1179,23 @@ ${ADMIN_CONTACT}
     });
     rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
 
-    return editMessageText(chatId, query.message.message_id, '🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>', {
+    return editMessageText(chatId, messageId, '🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>', {
       reply_markup: { inline_keyboard: rows }
     });
   }
 
-  // Thao tác Admin: bật bảo trì
   else if (data === 'admin_set_baotri') {
     if (!isAdmin) return;
     adminInputState[chatId] = { action: 'awaiting_maintenance_msg' };
-    return sendMessage(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>\n<i>(Ví dụ: Đang cập nhật API các cổng game, dự kiến 15 phút)</i>`);
+    return sendMessage(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>`);
   }
 
-  // Thao tác Admin: tắt bảo trì
   else if (data === 'admin_off_baotri') {
     if (!isAdmin) return;
     await firebase.setMaintenance(false, '', userId);
-    return sendMessage(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b> Người dùng có thể sử dụng bot bình thường.`);
+    return sendMessage(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b>`);
   }
 
-  // Thao tác Admin: xem thống kê token
   else if (data === 'admin_view_tokens') {
     if (!isAdmin) return;
     const tokens = await firebase.getAllTokens();
@@ -538,11 +1212,20 @@ ${ADMIN_CONTACT}
 • 🟢 Chưa dùng: <b>${free}</b>
 • 🔴 Đã kích hoạt: <b>${used}</b>
 ━━━━━━━━━━━━━━━━━━━━
-💡 Để tạo thêm token hoặc xóa token, hãy mở trang web quản trị:\n👉 <b>http://localhost:3000/admin.html</b>
-      `.trim()
+💡 Tạo thêm token nhanh: gõ <code>/taotoken 30ngay</code> hoặc bấm nút bên dưới:
+      `.trim(),
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '⚡ Tạo Token Mới', callback_data: 'admin_create_token_prompt' }],
+            [{ text: '🔙 Quay Lại', callback_data: 'back_main' }]
+          ]
+        }
+      }
     );
   }
 
+  // ================= GENERAL USER ACTIONS =================
   // Xem dự đoán kênh
   else if (data.startsWith('pred_')) {
     const channelId = data.replace('pred_', '');
@@ -561,7 +1244,7 @@ ${ADMIN_CONTACT}
       ]
     };
 
-    const res = await editMessageText(chatId, query.message.message_id, text, { reply_markup: keyboard });
+    const res = await editMessageText(chatId, messageId, text, { reply_markup: keyboard });
     if (!res || !res.ok) {
       await sendMessage(chatId, text, { reply_markup: keyboard });
     }
@@ -590,7 +1273,7 @@ ${ADMIN_CONTACT}
     });
   }
 
-  // Xem tất cả cổng game
+  // Danh sách tất cả cổng game
   else if (data === 'menu_all_portals') {
     const channels = config.loadEndpoints();
     const rows = [];
@@ -604,7 +1287,7 @@ ${ADMIN_CONTACT}
     }
     rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
 
-    editMessageText(chatId, query.message.message_id, '📋 <b>DANH SÁCH TẤT CẢ CÁC CỔNG GAME HỖ TRỢ:</b>\nBấm chọn cổng game bạn muốn soi cầu:', {
+    editMessageText(chatId, messageId, '📋 <b>DANH SÁCH TẤT CẢ CÁC CỔNG GAME HỖ TRỢ:</b>\nBấm chọn cổng game bạn muốn soi cầu:', {
       reply_markup: { inline_keyboard: rows }
     });
   }
@@ -673,7 +1356,7 @@ ${ADMIN_CONTACT}
   // Quay lại
   else if (data === 'back_main') {
     const keyboard = isAdmin ? getAdminKeyboard() : getUserKeyboard();
-    editMessageText(chatId, query.message.message_id, '👑 <b>BẢNG ĐIỀU KHIỂN SOI CẦU TÀI XỈU VIP</b>\n\n👇 Chọn cổng game bạn muốn soi cầu:', {
+    editMessageText(chatId, messageId, '👑 <b>BẢNG ĐIỀU KHIỂN SOI CẦU TÀI XỈU VIP</b>\n\n👇 Chọn cổng game bạn muốn soi cầu:', {
       reply_markup: keyboard
     });
   }

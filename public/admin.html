@@ -287,6 +287,103 @@
       </div>
     </div>
 
+    <!-- Admin Management Box -->
+    <div class="card" style="border-color: rgba(0, 240, 255, 0.4); background: rgba(0, 240, 255, 0.03);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <h2 class="card-title" style="color: var(--cyan); margin-bottom: 0;">
+          👑 CÀI ĐẶT & QUẢN LÝ QUẢN TRỊ VIÊN (ADMIN)
+        </h2>
+        <span style="font-size: 12px; color: #94a3b8;">
+          Tổng Quản trị viên: <strong id="adminCountBadge" style="color: var(--cyan); font-family: var(--mono); font-size: 14px;">2</strong>
+        </span>
+      </div>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">
+        Cấp quyền Admin cho tài khoản mới hoặc chuyển Admin thành User thường (thu hồi quyền quản trị). Dữ liệu đồng bộ trực tiếp với Telegram Bot.
+      </p>
+
+      <!-- Add Admin Form -->
+      <div class="form-grid" style="margin-bottom: 20px;">
+        <div class="form-group">
+          <label class="label">Telegram ID cần thêm làm Admin:</label>
+          <input type="text" id="newAdminId" class="input-field mono-input" placeholder="VD: 123456789 (chỉ nhập số ID)">
+        </div>
+
+        <div class="form-group">
+          <label class="label">Tên Admin / Ghi chú / Username:</label>
+          <input type="text" id="newAdminName" class="input-field" placeholder="VD: Admin Hùng (@hungdev)">
+        </div>
+
+        <div class="form-group">
+          <label class="label">Phân cấp quyền hạn:</label>
+          <select id="newAdminRole" class="select-field">
+            <option value="Admin">Admin (Quản trị viên)</option>
+            <option value="Super Admin">Super Admin (Toàn quyền)</option>
+          </select>
+        </div>
+
+        <button class="btn-create" id="addAdminBtn" style="background: linear-gradient(135deg, #00f0ff, #0284c7); color: #000;">
+          👑 THÊM ADMIN MỚI
+        </button>
+      </div>
+
+      <!-- Admin List Table -->
+      <h3 style="font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+        <span>🛡️</span> DANH SÁCH QUẢN TRỊ VIÊN ĐANG HOẠT ĐỘNG
+      </h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>TELEGRAM ID</th>
+              <th>TÊN QUẢN TRỊ VIÊN</th>
+              <th>VAI TRÒ</th>
+              <th>NGÀY CẤP QUYỀN</th>
+              <th>THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody">
+            <tr>
+              <td colspan="5" style="text-align:center; padding:20px; color:#64748b;">Đang tải danh sách Admin...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Card Transactions Box (DoiTheVip) -->
+    <div class="card" style="border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.03);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <h2 class="card-title" style="color: var(--emerald); margin-bottom: 0;">
+          💳 LỊCH SỬ NẠP THẺ CÀO BÁN TOKEN TỰ ĐỘNG (DOITHEVIP)
+        </h2>
+        <span style="font-size: 12px; color: #94a3b8;">
+          Tổng Giao Dịch: <strong id="cardTxCountBadge" style="color: var(--emerald); font-family: var(--mono); font-size: 14px;">0</strong>
+        </span>
+      </div>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">
+        Danh sách thẻ cào do người dùng gửi nạp qua Telegram Bot. Hệ thống kết nối API DoiTheVip.com tự động gạch thẻ và cấp token VIP (Gói 7 Ngày: 200k, Gói 30 Ngày: 1M).
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>MÃ ĐƠN (REQ_ID)</th>
+              <th>NGƯỜI DÙNG</th>
+              <th>NHÀ MẠNG</th>
+              <th>MỆNH GIÁ</th>
+              <th>TRẠNG THÁI</th>
+              <th>TOKEN ĐÃ CẤP</th>
+              <th>THỜI GIAN</th>
+            </tr>
+          </thead>
+          <tbody id="cardTxTableBody">
+            <tr>
+              <td colspan="7" style="text-align:center; padding:20px; color:#64748b;">Chưa có giao dịch nạp thẻ nào.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- Create Form -->
     <div class="card">
@@ -505,6 +602,170 @@
       showToast(`Đã tạo thành công ${qty} mã token mới!`);
     });
 
+    // ================= QUẢN LÝ ADMIN =================
+    const adminsRef = db.ref('system/admins');
+
+    // 2 Admin gốc tối cao mặc định
+    const DEFAULT_ADMINS = {
+      '7769479790': {
+        id: '7769479790',
+        name: 'Super Admin (@spamsmstaken)',
+        username: '@spamsmstaken',
+        role: 'Super Admin',
+        isDefault: true,
+        created_at: '2026-01-01T00:00:00.000Z'
+      },
+      '8083052279': {
+        id: '8083052279',
+        name: 'Super Admin (@icebearvndev)',
+        username: '@icebearvndev',
+        role: 'Super Admin',
+        isDefault: true,
+        created_at: '2026-01-01T00:00:00.000Z'
+      }
+    };
+
+    // Lắng nghe danh sách Admin Realtime từ Firebase
+    adminsRef.on('value', (snap) => {
+      const data = snap.val() || {};
+      renderAdminTable(data);
+    });
+
+    function renderAdminTable(firebaseAdmins) {
+      const tbody = document.getElementById('adminTableBody');
+      tbody.innerHTML = '';
+
+      const merged = { ...DEFAULT_ADMINS, ...firebaseAdmins };
+      const list = Object.values(merged);
+
+      document.getElementById('adminCountBadge').textContent = list.length;
+
+      list.forEach(a => {
+        const tr = document.createElement('tr');
+        const isDefault = a.id === '7769479790' || a.id === '8083052279';
+
+        const roleBadge = isDefault
+          ? `<span class="tag-status" style="background:rgba(255,215,0,0.15); color:var(--gold); border:1px solid rgba(255,215,0,0.3);">👑 ${a.role || 'Super Admin'}</span>`
+          : `<span class="tag-status" style="background:rgba(0,240,255,0.15); color:var(--cyan); border:1px solid rgba(0,240,255,0.3);">🛡️ ${a.role || 'Admin'}</span>`;
+
+        const actionCell = isDefault
+          ? `<button class="btn-copy" style="background:rgba(0,240,255,0.15); border:1px solid rgba(0,240,255,0.3); color:var(--cyan); font-weight:700; padding:4px 10px; margin-right:6px;" onclick="editAdminRole('${a.id}', '${a.name || ''}', '${a.role || 'Super Admin'}')">✏️ Sửa Chức Quyền</button> <span style="font-size:11px; color:#64748b;">(Cố định)</span>`
+          : `<button class="btn-copy" style="background:rgba(0,240,255,0.15); border:1px solid rgba(0,240,255,0.3); color:var(--cyan); font-weight:700; padding:4px 10px; margin-right:6px;" onclick="editAdminRole('${a.id}', '${a.name || ''}', '${a.role || 'Admin'}')">✏️ Sửa Chức Quyền</button>
+             <button class="btn-del" style="background:rgba(244,63,94,0.15); border-color:rgba(244,63,94,0.3); color:var(--rose);" onclick="demoteAdminToUser('${a.id}', '${a.name || a.id}')">🔄 Chuyển thành User thường</button>`;
+
+        tr.innerHTML = `
+          <td><code style="font-family:var(--mono); font-weight:800; color:var(--gold);">${a.id}</code></td>
+          <td><strong style="color:#fff;">${a.name || a.username || 'Admin ' + a.id}</strong></td>
+          <td>${roleBadge}</td>
+          <td style="font-size:11px; color:#94a3b8;">${a.created_at ? new Date(a.created_at).toLocaleString('vi-VN') : 'Mặc định'}</td>
+          <td>${actionCell}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Chỉnh sửa chức quyền Admin (Cho cả 2 Admin cố định)
+    window.editAdminRole = async function(adminId, currentName, currentRole) {
+      const newName = prompt(`Sửa tên hiển thị / Ghi chú cho Admin ID [${adminId}]:`, currentName || `Admin ${adminId}`);
+      if (newName === null) return;
+
+      const newRole = prompt(`Nhập chức quyền / vai trò mới (Ví dụ: Super Admin, Chủ Hệ Thống, Tổng Quản Trị, Quản Lý...):`, currentRole || 'Super Admin');
+      if (newRole === null || !newRole.trim()) return;
+
+      await adminsRef.child(adminId).update({
+        id: String(adminId),
+        name: newName.trim() || `Admin ${adminId}`,
+        role: newRole.trim(),
+        updated_at: new Date().toISOString()
+      });
+
+      showToast(`Đã cập nhật chức quyền thành [${newRole.trim()}] cho Admin ${adminId}!`);
+    };
+
+    // Nút Thêm Admin Mới
+    document.getElementById('addAdminBtn').addEventListener('click', async () => {
+      const idInput = document.getElementById('newAdminId');
+      const nameInput = document.getElementById('newAdminName');
+      const roleInput = document.getElementById('newAdminRole');
+
+      const id = idInput.value.trim();
+      const name = nameInput.value.trim();
+      const role = roleInput.value;
+
+      if (!id || !/^\d+$/.test(id)) {
+        alert('Vui lòng nhập Telegram ID hợp lệ (chỉ bao gồm các chữ số, ví dụ 123456789)!');
+        return;
+      }
+
+      await adminsRef.child(id).set({
+        id: String(id),
+        name: name || `Admin ${id}`,
+        role: role || 'Admin',
+        created_at: new Date().toISOString()
+      });
+
+      showToast(`Đã cấp quyền ${role} cho tài khoản ID: ${id} thành công!`);
+      idInput.value = '';
+      nameInput.value = '';
+    });
+
+    // Chuyển Admin thành User thường (Gỡ quyền Admin)
+    window.demoteAdminToUser = async function(adminId, adminName) {
+      if (adminId === '7769479790' || adminId === '8083052279') {
+        alert('Hai tài khoản này là Super Admin cố định của hệ thống!');
+        return;
+      }
+
+      if (confirm(`Bạn có chắc chắn muốn chuyển Admin [${adminName}] (ID: ${adminId}) thành User thường không?\n\nTài khoản này sẽ mất toàn bộ quyền quản trị bot ngay lập tức!`)) {
+        await adminsRef.child(adminId).remove();
+        showToast(`Đã chuyển tài khoản ID ${adminId} thành User thường!`);
+      }
+    };
+
+    // ================= LỊCH SỬ NẠP THẺ CÀO (DOITHEVIP) =================
+    const cardTxRef = db.ref('transactions/cards');
+    cardTxRef.on('value', (snap) => {
+      const data = snap.val() || {};
+      renderCardTxTable(data);
+    });
+
+    function renderCardTxTable(dataObj) {
+      const tbody = document.getElementById('cardTxTableBody');
+      tbody.innerHTML = '';
+      const list = Object.values(dataObj).reverse();
+      document.getElementById('cardTxCountBadge').textContent = list.length;
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">Chưa có giao dịch nạp thẻ nào.</td></tr>';
+        return;
+      }
+
+      list.forEach(tx => {
+        const tr = document.createElement('tr');
+        let statusBadge = '<span class="tag-status" style="background:rgba(234,179,8,0.15); color:#eab308; border:1px solid rgba(234,179,8,0.3);">⏳ Đang Xử Lý</span>';
+        if (tx.status === 'SUCCESS') {
+          statusBadge = '<span class="tag-status tag-free">🟢 Thành Công</span>';
+        } else if (tx.status === 'FAILED') {
+          statusBadge = '<span class="tag-status tag-used">🔴 Thất Bại</span>';
+        }
+
+        const tokenCol = tx.token
+          ? `<code style="font-family:var(--mono); color:var(--gold); font-weight:800;">${tx.token}</code> <span style="font-size:11px; color:#94a3b8;">(${tx.duration || 'VIP'})</span>`
+          : '<span style="color:#64748b;">-</span>';
+
+        tr.innerHTML = `
+          <td><code style="font-family:var(--mono); color:#38bdf8;">${tx.request_id || '-'}</code></td>
+          <td><strong>${tx.user_name || 'User'}</strong> <span style="font-size:11px; color:#64748b;">(${tx.user_id})</span></td>
+          <td><strong>${tx.telco || '-'}</strong></td>
+          <td><strong style="color:var(--gold);">${parseInt(tx.amount || 0).toLocaleString('vi-VN')}đ</strong></td>
+          <td>${statusBadge}</td>
+          <td>${tokenCol}</td>
+          <td style="font-size:11px; color:#94a3b8;">${tx.created_at ? new Date(tx.created_at).toLocaleString('vi-VN') : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     // Copy Token
     window.copyToken = function(token) {
       navigator.clipboard.writeText(token).then(() => {
@@ -512,11 +773,16 @@
       });
     };
 
-    // Xóa Token
+    // Xóa Token và lập tức thu hồi quyền user
     window.deleteToken = async function(token) {
       if (confirm(`Bạn có chắc chắn muốn xóa mã [${token}] không?`)) {
+        const snap = await tokensRef.child(token).once('value');
+        const tVal = snap.val();
+        if (tVal && tVal.used_by_id) {
+          await db.ref('users/' + tVal.used_by_id).remove().catch(() => {});
+        }
         await tokensRef.child(token).remove();
-        showToast(`Đã xóa mã ${token}`);
+        showToast(`Đã xóa mã ${token} và thu hồi quyền user ngay lập tức!`);
       }
     };
 
