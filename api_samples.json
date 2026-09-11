@@ -1,0 +1,567 @@
+{
+  "xocdia88_txmd5": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Tài",
+      "md5_decrypt": "#1729776_YzskltufAuGgUUefEB{2_4_6}Yzsklt",
+      "md5_encrypt": "66233737c297ac543cb20a35374f3a39",
+      "phien": 1729776,
+      "thoi_gian": "2026-09-11 21:57:20",
+      "tong": 12,
+      "xac_thuc_md5": "Bịp (Key không khớp)",
+      "xuc_xac_1": 2,
+      "xuc_xac_2": 4,
+      "xuc_xac_3": 6
+    }
+  },
+  "lc79_xocdia": {
+    "ok": true,
+    "data": {
+      "betting_info": {
+        "chi_tiet_cuoc": {
+          "ba_do": {
+            "nguoi_cuoc": 56,
+            "tien_cuoc": "23.511.000"
+          },
+          "ba_trang": {
+            "nguoi_cuoc": 47,
+            "tien_cuoc": "10.014.000"
+          },
+          "bon_do": {
+            "nguoi_cuoc": 17,
+            "tien_cuoc": "3.463.000"
+          },
+          "bon_trang": {
+            "nguoi_cuoc": 18,
+            "tien_cuoc": "3.157.000"
+          },
+          "chan": {
+            "nguoi_cuoc": 88,
+            "tien_cuoc": "28.735.000"
+          },
+          "le": {
+            "nguoi_cuoc": 77,
+            "tien_cuoc": "26.590.000"
+          }
+        },
+        "dem_nguoc": 6,
+        "jackpot": "382.237.090",
+        "md5": "f6cae6892613a4ec67d166ab8e106d5c",
+        "phien_cuoc": 7930829,
+        "tick": 17,
+        "tong_nguoi_cuoc": 156,
+        "tong_tien_cuoc": "95.470.000",
+        "trang_thai": "Đang cược"
+      },
+      "jackpot_result": [
+        "4 Trắng",
+        "Chẵn",
+        "Chẵn",
+        "3 Đỏ"
+      ],
+      "jackpot_result_goc": [
+        "four_trang",
+        "chan",
+        "chan",
+        "three_do"
+      ],
+      "ket_qua_chi_tiet": "two_trang",
+      "ket_qua_chi_tiet_goc": "two_trang",
+      "ket_qua_truyen_thong": "Chẵn",
+      "md5_raw": "YZlvp6FN:7930828(2T,2D)1789138591382",
+      "phien": 7930828,
+      "tick_update_at": "2026-09-11 21:57:20",
+      "update_at": "2026-09-11 21:56:54",
+      "xuc_xac": [
+        "Trắng",
+        "Đỏ",
+        "Trắng",
+        "Đỏ"
+      ],
+      "xuc_xac_goc": [
+        "trang",
+        "do",
+        "trang",
+        "do"
+      ]
+    }
+  },
+  "sunwin_xdlive": {
+    "ok": true,
+    "data": {
+      "cmd": 1950,
+      "color": "1 ĐỎ - 3 TRẮNG",
+      "dealer_name": "Ice",
+      "description": "1 Đỏ - 3 Trắng",
+      "end_time": "2026-07-28 03:55:50",
+      "end_timestamp": 1785160550511,
+      "ended": true,
+      "even_odd": "LẺ",
+      "gid": 317,
+      "is_jackpot": false,
+      "jackpot_accumulation": 41732,
+      "jackpot_amount": 12493872,
+      "jackpot_result": "1-2-2-5",
+      "odds_even": 0.98,
+      "odds_odd": 0.98,
+      "odds_red_x3": 2.91,
+      "odds_red_x4": 14.4,
+      "odds_white_x3": 2.91,
+      "odds_white_x4": 14.4,
+      "received_at": "2026-09-11 17:09:17",
+      "result_raw": "1",
+      "round_id": "1785160510889",
+      "session_id": 291550,
+      "start_time": "2026-07-28 03:55:10",
+      "start_timestamp": 1785160510889,
+      "status": "ENDED",
+      "time_bet": 26,
+      "update_at": "2026-09-11 17:09:16",
+      "win_bet": "ODD,WHITE_X3",
+      "win_bet_vn": "ODD,WHITE_X3"
+    }
+  },
+  "lc79_tx": {
+    "ok": true,
+    "data": {
+      "betting_info": {
+        "dem_nguoc": 2,
+        "jackpot": "230.249.756",
+        "nguoi_cuoc": {
+          "tai": 311,
+          "xiu": 300
+        },
+        "phien_cuoc": 6904526,
+        "settled_balance": 124495604,
+        "tick": 2,
+        "tien_cuoc": {
+          "tai": "124.495.604",
+          "xiu": "146.866.179"
+        },
+        "tong_nguoi_cuoc": 611,
+        "tong_tien_cuoc": "271.361.783",
+        "trang_thai": "Kết thúc phiên"
+      },
+      "ket_qua": "Tài",
+      "phien": 6904526,
+      "tick_update_at": "2026-09-11 21:57:20",
+      "tong": 13,
+      "update_at": "2026-09-11 21:57:07",
+      "xuc_xac_1": 6,
+      "xuc_xac_2": 4,
+      "xuc_xac_3": 3
+    }
+  },
+  "club789_tx": {
+    "ok": true,
+    "data": {
+      "current": {
+        "ket_qua": "Tài",
+        "phien": 3133524,
+        "tai": {
+          "so_nguoi": 410,
+          "so_tien": 208439086
+        },
+        "tong": 11,
+        "xiu": {
+          "so_nguoi": 385,
+          "so_tien": 163918486
+        },
+        "xuc_xac": [
+          3,
+          5,
+          3
+        ]
+      },
+      "last_update": "2026-09-11T21:56:35.865247"
+    }
+  },
+  "betvip_tx": {
+    "ok": true,
+    "data": {
+      "betting_info": {
+        "dem_nguoc": 1,
+        "jackpot": "171.680.476",
+        "nguoi_cuoc": {
+          "tai": 285,
+          "xiu": 285
+        },
+        "phien_cuoc": 7114004,
+        "settled_balance": 183773116,
+        "tick": 19,
+        "tien_cuoc": {
+          "tai": "258.068.055",
+          "xiu": "183.773.116"
+        },
+        "tong_nguoi_cuoc": 570,
+        "tong_tien_cuoc": "441.841.171",
+        "trang_thai": "Chờ kết quả"
+      },
+      "ket_qua": "Tài",
+      "phien": 7114003,
+      "tick_update_at": "2026-09-11 21:57:21",
+      "tong": 13,
+      "update_at": "2026-09-11 21:56:28",
+      "xuc_xac_1": 4,
+      "xuc_xac_2": 3,
+      "xuc_xac_3": 6
+    }
+  },
+  "club789_xdlive": {
+    "ok": true,
+    "data": {
+      "cmd": 1956,
+      "color": "3 ĐỎ - 1 TRẮNG",
+      "dealer_name": "Venus",
+      "description": "2 Đỏ - 2 Trắng hoặc 3 Đỏ - 1 Trắng",
+      "end_time": "2026-09-12 04:56:29",
+      "end_timestamp": 1789138589876,
+      "ended": true,
+      "even_odd": "CHẴN",
+      "gid": 306,
+      "is_jackpot": false,
+      "jackpot_accumulation": 90582,
+      "jackpot_amount": 56972342,
+      "jackpot_result": "3-4-6-3",
+      "odds_even": 0.98,
+      "odds_odd": 0.98,
+      "odds_red_x3": 2.91,
+      "odds_red_x4": 14.4,
+      "odds_white_x3": 2.91,
+      "odds_white_x4": 14.4,
+      "received_at": "2026-09-11 21:56:31",
+      "result_raw": "2",
+      "round_id": "1789138535451",
+      "session_id": 2545215,
+      "start_time": "2026-09-12 04:55:35",
+      "start_timestamp": 1789138535451,
+      "status": "ENDED",
+      "time_bet": 35,
+      "update_at": "2026-09-11 21:56:30",
+      "win_bet": "EVEN",
+      "win_bet_vn": "CHẴN"
+    }
+  },
+  "hitclub_tx": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Xỉu",
+      "no_hu": false,
+      "phien": 3150353,
+      "thoi_gian": "11-09-2026 21:56:32",
+      "tong": 7,
+      "xuc_xac_1": 5,
+      "xuc_xac_2": 1,
+      "xuc_xac_3": 1
+    }
+  },
+  "club789_sicbo": {
+    "ok": true,
+    "data": {
+      "game": "789club",
+      "ket_qua": "Tài",
+      "phien": "#2893224",
+      "success": true,
+      "tong": 15,
+      "update_at": 1789138585639,
+      "xuc_xac_1": 6,
+      "xuc_xac_2": 6,
+      "xuc_xac_3": 3
+    }
+  },
+  "sunwin_tx": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Xỉu",
+      "phien": 3247464,
+      "thoi_gian": "11-09-2026 21:56:50 UTC+7",
+      "tong": 10,
+      "xuc_xac_1": 4,
+      "xuc_xac_2": 4,
+      "xuc_xac_3": 2
+    }
+  },
+  "lc79_txmd5": {
+    "ok": true,
+    "data": {
+      "betting_info": {
+        "nguoi_cuoc": {
+          "tai": 253,
+          "xiu": 287
+        },
+        "phien_cuoc": 7040077,
+        "sub_tick": 1,
+        "tick": 14,
+        "tien_cuoc": {
+          "tai": "130.994.765",
+          "xiu": "139.209.872"
+        },
+        "tong_nguoi_cuoc": 540,
+        "tong_tien_cuoc": "270.204.637",
+        "trang_thai": "Đang cược"
+      },
+      "ket_qua": "Xỉu",
+      "md5_raw": "7040076:ArDjy{1-1-3}4Lup6Vv2mxT1M",
+      "phien": "7040076",
+      "tick_update_at": "2026-09-11 21:57:21",
+      "tong": 5,
+      "update_at": "2026-09-11 21:56:32",
+      "xuc_xac_1": 1,
+      "xuc_xac_2": 1,
+      "xuc_xac_3": 3
+    }
+  },
+  "son789_tx": {
+    "ok": true,
+    "data": {
+      "jackpot": 151931079220,
+      "ket_qua": "Tài",
+      "phien": 1682051,
+      "tong": 13,
+      "update_at": "2026-09-11 21:56:35",
+      "xuc_xac_1": 3,
+      "xuc_xac_2": 6,
+      "xuc_xac_3": 4
+    }
+  },
+  "son789_txmd5": {
+    "ok": true,
+    "data": {
+      "current": {
+        "cBB": 0,
+        "gBB": 0,
+        "j": 0,
+        "ket_qua": "Xỉu",
+        "md5_result": "0E447C077F304850ECFCE1C69B60BBB2",
+        "phien": "1682233",
+        "raw_rS": "#1682233_0s7JErHLJ9pAf{3-5-2}C99mTLLt1Ba",
+        "tong": 10,
+        "xuc_xac": [
+          3,
+          5,
+          2
+        ]
+      },
+      "last_update": "2026-09-11T21:56:55.903455"
+    }
+  },
+  "sunwin_sicbo": {
+    "ok": true,
+    "data": {
+      "game": "sunwin",
+      "ket_qua": "Xỉu",
+      "phien": "#2724980",
+      "success": true,
+      "tong": 10,
+      "update_at": 1789138562344,
+      "xuc_xac_1": 1,
+      "xuc_xac_2": 3,
+      "xuc_xac_3": 6
+    }
+  },
+  "ta28_txmd5": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Xỉu",
+      "md5_raw": "#1576240_DVlM{1-1-1}icIE6DbECeIz0DGnW6a8",
+      "phien": "1576240",
+      "tong": 3,
+      "update_at": "2026-09-11 21:57:07",
+      "xuc_xac_1": 1,
+      "xuc_xac_2": 1,
+      "xuc_xac_3": 1
+    }
+  },
+  "hitclub_sicbo": {
+    "ok": true,
+    "data": {
+      "game": "hitclub",
+      "ket_qua": "Xỉu",
+      "phien": "#0701531",
+      "success": true,
+      "tong": 5,
+      "update_at": 1789138567649,
+      "xuc_xac_1": 1,
+      "xuc_xac_2": 1,
+      "xuc_xac_3": 3
+    }
+  },
+  "betvip_txmd5": {
+    "ok": true,
+    "data": {
+      "betting_info": {
+        "nguoi_cuoc": {
+          "tai": 211,
+          "xiu": 199
+        },
+        "phien_cuoc": 7034528,
+        "sub_tick": 4,
+        "tick": 17,
+        "tien_cuoc": {
+          "tai": "98.862.000",
+          "xiu": "104.798.000"
+        },
+        "tong_nguoi_cuoc": 410,
+        "tong_tien_cuoc": "203.660.000",
+        "trang_thai": "BETTING"
+      },
+      "ket_qua": "Xỉu",
+      "md5_raw": "7034527:VnZOBg5xlpUeY6{2-3-4}PGuA",
+      "phien": "7034527",
+      "tick_update_at": "2026-09-11 21:57:21",
+      "tong": 9,
+      "update_at": "2026-09-11 21:56:34",
+      "xuc_xac_1": 2,
+      "xuc_xac_2": 3,
+      "xuc_xac_3": 4
+    }
+  },
+  "b52_sicbo": {
+    "ok": true,
+    "data": {
+      "game": "b52",
+      "ket_qua": "Xỉu",
+      "phien": "#4043526",
+      "success": true,
+      "tong": 9,
+      "update_at": 1789138591064,
+      "xuc_xac_1": 4,
+      "xuc_xac_2": 2,
+      "xuc_xac_3": 3
+    }
+  },
+  "hitclub_txmd5": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Xỉu",
+      "md5_dec": "#Jc2606785_$@%c86Eh6l#{2-4-3}tZ%KJQvpYGLHFfm$OHewRphIA02XR1q$VzgJ3s3q1TuhQpB0b74oZkxblXa%NMMF9MYtovBZ🚅😛🌡🍽️🌊🛑🌰🛢️🦼🧅😜⏳☄️🌊🕥",
+      "md5_enc": "3a4ff51f16df06adfc940697e8096fcaeff3fe2bee6b3d4b14e764d41b7603b4",
+      "phien": 2606785,
+      "thoi_gian": "11-09-2026 21:56:21",
+      "tong": 9,
+      "xuc_xac_1": 2,
+      "xuc_xac_2": 4,
+      "xuc_xac_3": 3
+    }
+  },
+  "rikvip_txmd5": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Tài",
+      "md5": "19214ee8f7dc3fba209daf26418470340b98a0f036de323e4b48055fc0cdc877",
+      "md5_rs": "#H1384827_hjo7o6RQyqB9pn5@VKbC7djDLZw4er8L0kyKHL1YIeObXXAmRwBUv6je@ahLU0XN5Gx1kRjW06WnZZECcRxtE{5-5-5}7w4J👿⛰😧🕤🎡🧇😟🤍🍷❣🏦🚀",
+      "phien": 1384827,
+      "tong": 15,
+      "update_at": "2026-09-11T21:56:37+07:00",
+      "xuc_xac_1": 5,
+      "xuc_xac_2": 5,
+      "xuc_xac_3": 5
+    }
+  },
+  "b52_tx": {
+    "ok": true,
+    "data": {
+      "ket_qua": "xỉu",
+      "phien": 2938842,
+      "tong": 8,
+      "update_at": "2026-09-11 21:56:37",
+      "xuc_xac_1": 3,
+      "xuc_xac_2": 3,
+      "xuc_xac_3": 2
+    }
+  },
+  "rikvip_tx": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Xỉu",
+      "no_hu": false,
+      "phien": 2359157,
+      "tong": 10,
+      "update_at": "2026-09-11T21:55:45+07:00",
+      "xuc_xac_1": 6,
+      "xuc_xac_2": 3,
+      "xuc_xac_3": 1
+    }
+  },
+  "b52_txmd5": {
+    "ok": true,
+    "data": {
+      "ket_qua": "xỉu",
+      "md5_dec": "#f2123086_I25PBq%DiPLMX$XBFDUU5JzguXE@zx3wC7PV$lEvyMlSek9l4pHLLjVSE4QEk3MdtVvBQZ2IA9Y7{5-2-2}O3#J0aGR$FcvPCU%J15qRK#Nv4Uzf%@o#EYLMAZvn🪐🍘🤕😫⭐🤬🚏🚘⛈🥫🌯⛵🍳🥩⏳",
+      "md5_enc": "bc46fb1cb42364d16ff1bce129ec00c9c2de0bfd2d9afee10a2c8a001c5d3fd9",
+      "phien": 2123086,
+      "so_nguoi_cuoc_tai": 179,
+      "so_nguoi_cuoc_xiu": 261,
+      "tong": 9,
+      "tong_tien_cuoc_tai": "70,980,475 ₫",
+      "tong_tien_cuoc_xiu": "106,240,227 ₫",
+      "xuc_xac_1": 5,
+      "xuc_xac_2": 2,
+      "xuc_xac_3": 2
+    }
+  },
+  "luck8_txmd5": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Tài",
+      "phien": "2609111317",
+      "tong": 11,
+      "update_at": "2026-09-11 21:56:00",
+      "xuc_xac_1": 4,
+      "xuc_xac_2": 2,
+      "xuc_xac_3": 5
+    }
+  },
+  "ta28_tx": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Tài",
+      "phien": 1582622,
+      "tong": 12,
+      "update_at": "2026-09-11 21:56:47",
+      "xuc_xac_1": 2,
+      "xuc_xac_2": 5,
+      "xuc_xac_3": 5
+    }
+  },
+  "luck8_sicbo40": {
+    "ok": true,
+    "data": {
+      "ket_qua": "Tài",
+      "phien": "202609111975",
+      "tong": 15,
+      "update_at": "2026-09-11 21:56:45",
+      "xuc_xac_1": 5,
+      "xuc_xac_2": 4,
+      "xuc_xac_3": 6
+    }
+  },
+  "ogkfan_txmd5": {
+    "ok": false,
+    "error": "The operation was aborted due to timeout"
+  },
+  "iwin_tx": {
+    "ok": false,
+    "error": "The operation was aborted due to timeout"
+  },
+  "iwin_txmd5": {
+    "ok": false,
+    "error": "The operation was aborted due to timeout"
+  },
+  "max789_tx": {
+    "ok": false,
+    "error": "The operation was aborted due to timeout"
+  },
+  "max789_txmd5": {
+    "ok": false,
+    "error": "The operation was aborted due to timeout"
+  },
+  "sexy_v2": {
+    "ok": false,
+    "error": "The operation was aborted due to timeout"
+  },
+  "volta": {
+    "ok": false,
+    "error": "The operation was aborted due to timeout"
+  }
+}

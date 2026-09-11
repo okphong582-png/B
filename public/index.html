@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TOOL SOI CẦU TÀI XỈU AI - Báo Cầu Siêu Chuẩn</title>
+  <meta name="description" content="Tool soi cầu và dự đoán kết quả Tài Xỉu, MD5, Sicbo, Xóc Đĩa trực tiếp từ các cổng game Sunwin, Hitclub, 789Club, B52, Rikvip bằng công nghệ AI tiên tiến.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="app-body">
+  <!-- Top App Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-box">
+        <div class="brand-avatar">💎</div>
+        <div>
+          <h1 class="brand-name">TOOL TÀI XỈU <span class="vip-tag">VIP AI</span></h1>
+          <div class="brand-status">
+            <span class="pulse-dot"></span>
+            <span id="headerStatusText">Trực tiếp từ nhà cái</span>
+            <span class="ping-text" id="headerPing">45ms</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-tools">
+        <!-- Live Clock -->
+        <div class="clock-chip mono" id="topClock">--:--:--</div>
+        <!-- Sound Button -->
+        <button class="tool-btn active" id="audioToggleBtn" title="Âm thanh" aria-label="Âm thanh">
+          <span id="audioIcon">🔊</span>
+        </button>
+        <!-- API Config Button -->
+        <button class="tool-btn" id="openSettingsBtn" title="Cài đặt link API" aria-label="Cài đặt">
+          <span>⚙️</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Mobile & PC Container -->
+  <main class="app-main">
+
+    <!-- 1. Category Filter Tabs (Tất cả, Thường, MD5, Sicbo, Xóc Đĩa) -->
+    <section class="filter-tab-bar">
+      <button class="filter-btn active" data-type="all">TẤT CẢ</button>
+      <button class="filter-btn" data-type="taixiu">TÀI XỈU</button>
+      <button class="filter-btn" data-type="md5">TÀI XỈU MD5</button>
+      <button class="filter-btn" data-type="sicbo">SICBO</button>
+      <button class="filter-btn" data-type="xocdia">XÓC ĐĨA</button>
+    </section>
+
+    <!-- 2. Portal Selector Slider (Vuốt ngang mượt trên điện thoại) -->
+    <section class="portal-slider-wrap">
+      <div class="portal-slider" id="platformsList">
+        <!-- Injected via JS -->
+        <div class="portal-chip skeleton">Đang kết nối cổng game...</div>
+      </div>
+    </section>
+
+    <!-- 3. Current Room Header Banner -->
+    <section class="current-room-banner">
+      <div class="room-left">
+        <div class="room-icon" id="currentIcon">☀️</div>
+        <div class="room-meta">
+          <div class="room-name">
+            <span id="currentPlatformName">Sunwin</span>
+            <span class="room-sep">•</span>
+            <span class="room-game-badge" id="currentGameName">Tài Xỉu Thường</span>
+          </div>
+          <div class="room-session-info">
+            <span>Phiên: <strong class="mono text-gold" id="currentSessionId">#-------</strong></span>
+            <span class="sep-dot">|</span>
+            <span>Cập nhật: <span id="currentSessionTime">--:--</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="room-right">
+        <div class="countdown-pill">
+          <span class="countdown-sub">XỔ TRONG</span>
+          <span class="countdown-num mono" id="sessionCountdown">45s</span>
+        </div>
+        <button class="refresh-pill-btn" id="refreshChannelBtn" title="Làm mới">
+          <span>🔄</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 4. MASTER PREDICTION CARD (Trọng Tâm - Dễ Nhìn, Cực Nổi Bật) -->
+    <section class="master-pred-section">
+      <div class="pred-card" id="predCardContainer">
+        
+        <!-- Top Target Session -->
+        <div class="pred-card-top">
+          <div class="target-session-tag">
+            <span class="fire-icon">🔥</span>
+            <span>DỰ ĐOÁN PHIÊN: <strong id="nextSessionId" class="mono text-white">#-------</strong></span>
+          </div>
+          <div class="win-rate-pill">
+            <span>TỶ LỆ THẮNG: <strong id="winRateVal" class="text-gold">78.5%</strong></span>
+          </div>
+        </div>
+
+        <!-- Big Center Result Display -->
+        <div class="pred-center-stage">
+          <div class="pred-badge-glow" id="predHalo"></div>
+          
+          <div class="pred-main-badge" id="predMainBadge">
+            <div class="pred-call-caption">BÁO KẾT QUẢ</div>
+            <div class="pred-big-text" id="predictionResult">ĐANG TÍNH</div>
+            <div class="pred-conf-badge" id="confidenceValue">85% TỰ TIN</div>
+          </div>
+
+          <!-- Suggested Dice & Points -->
+          <div class="pred-details-grid">
+            <div class="pred-col-box">
+              <span class="box-label">DỰ ĐOÁN ĐIỂM SỐ</span>
+              <span class="box-val text-gold mono" id="predictedSumRange">11 - 13 ĐIỂM</span>
+            </div>
+            <div class="pred-col-box">
+              <span class="box-label">BỘ XÚC XẮC DỄ RA</span>
+              <div class="mini-dices-row" id="predictedDiceBox">
+                <span class="mini-dice">4</span>
+                <span class="mini-dice">4</span>
+                <span class="mini-dice">3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Betting Tactic Advice -->
+        <div class="tactic-bar" id="tacticBar">
+          <div class="tactic-badge" id="riskBadge">AN TOÀN</div>
+          <div class="tactic-text-content">
+            <strong id="tacticHeader">GỢI Ý VÀO TIỀN: ĐỀU TAY 1X</strong>
+            <span id="tacticDesc">Cầu đang đi rất thuận, vào lệnh tự tin!</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. RECENT RESULT & LIVE 3D DICES -->
+    <section class="recent-result-bar">
+      <div class="recent-label-block">
+        <span class="recent-title">VỪA XỔ PHIÊN</span>
+        <span class="recent-phien mono text-gold" id="lastSessionNum">#-------</span>
+      </div>
+
+      <div class="recent-center-dices">
+        <!-- 3 Dices -->
+        <div class="dice-box-item" id="dice1"><span class="pip pip-center pip-red"></span></div>
+        <div class="dice-box-item" id="dice2"><span class="pip pip-center"></span></div>
+        <div class="dice-box-item" id="dice3"><span class="pip pip-center"></span></div>
+      </div>
+
+      <div class="recent-sum-badge" id="latestOutcomePill">
+        <span class="recent-sum-num mono" id="latestTotalSum">--</span>
+        <span class="recent-sum-text">TỔNG</span>
+      </div>
+    </section>
+
+    <!-- 6. BRIDGE ROADMAP (BÀN CƠ SOI CẦU DỄ NHÌN NHẤT) -->
+    <section class="bridge-roadmap-section">
+      <div class="section-title-row">
+        <div>
+          <h2 class="sec-title">BẢNG SOI CẦU TRỰC QUAN</h2>
+          <span class="sec-sub" id="currentPatternName">Cầu đang phân tích...</span>
+        </div>
+
+        <div class="roadmap-tab-btns">
+          <button class="rd-tab active" id="tabBigRoadBtn">Cầu Bệt / Đảo</button>
+          <button class="rd-tab" id="tabBeadPlateBtn">Bàn Cờ Tròn</button>
+        </div>
+      </div>
+
+      <div class="roadmap-card">
+        <!-- Big Road Display (Cầu Bệt thẳng đứng, Cầu Đảo ngang) -->
+        <div class="roadmap-viewport" id="bigRoadViewport">
+          <div class="bigroad-canvas" id="bigRoadGrid">
+            <!-- Injected in JS -->
+          </div>
+        </div>
+
+        <!-- Bead Plate (Hạt Tròn Điểm) -->
+        <div class="roadmap-viewport hidden" id="beadPlateViewport">
+          <div class="bead-canvas" id="beadBoard">
+            <!-- Injected in JS -->
+          </div>
+        </div>
+
+        <div class="roadmap-guide-bar">
+          <span class="guide-item"><span class="circle-dot dot-tai"></span> <strong>Tài</strong> (11 - 17)</span>
+          <span class="guide-item"><span class="circle-dot dot-xiu"></span> <strong>Xỉu</strong> (4 - 10)</span>
+          <span class="guide-right" id="streakNotice">Chuỗi thắng: <strong class="text-gold" id="winStreakVal">3 tay</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. CHART BIẾN THIÊN ĐIỂM SỐ XÚC XẮC -->
+    <section class="chart-section">
+      <div class="section-title-row">
+        <div>
+          <h2 class="sec-title">BIỂU ĐỒ DAO ĐỘNG ĐIỂM</h2>
+          <span class="sec-sub">Theo dõi độ lệch quanh mốc chuẩn 10.5 điểm</span>
+        </div>
+        <div class="chart-tag mono" id="chartAvgPill">TB: 10.5</div>
+      </div>
+
+      <div class="chart-card">
+        <canvas id="sumTrendChart" width="600" height="200"></canvas>
+      </div>
+    </section>
+
+    <!-- 8. LỊCH SỬ PHIÊN VÀ ĐỐI SOÁT KẾT QUẢ -->
+    <section class="history-section">
+      <div class="section-title-row">
+        <div>
+          <h2 class="sec-title">LỊCH SỬ KẾT QUẢ & ĐỐI SOÁT</h2>
+          <span class="sec-sub">Kiểm chứng tự động từng phiên AI đã báo</span>
+        </div>
+        <div class="history-badge" id="historyCountBadge">50 phiên</div>
+      </div>
+
+      <div class="history-card">
+        <div class="history-list" id="historyTableBody">
+          <!-- Mobile friendly cards & list items -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 9. STICKY MOBILE PREDICTION BAR (Thanh dự đoán ghim đáy màn hình điện thoại) -->
+  <aside class="sticky-mobile-bar" id="stickyMobileBar">
+    <div class="sticky-left">
+      <span class="sticky-label">PHIÊN TIẾP:</span>
+      <strong class="mono" id="stickyNextSession">#-------</strong>
+      <span class="sticky-timer mono" id="stickyCountdown">45s</span>
+    </div>
+    <div class="sticky-center">
+      <span class="sticky-pred-pill" id="stickyPredPill">DỰ ĐOÁN: TÀI</span>
+    </div>
+    <div class="sticky-right">
+      <span class="sticky-conf" id="stickyConf">88%</span>
+    </div>
+  </aside>
+
+  <!-- MODAL QUẢN LÝ LINK API (Dễ hiểu, đơn giản) -->
+  <div class="app-modal-overlay hidden" id="settingsModal">
+    <div class="app-modal">
+      <div class="modal-head">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-icon">⚙️</span>
+          <div>
+            <h3 class="modal-h">Cài Đặt Link API Cổng Game</h3>
+            <p class="modal-p">Khi link Cloudflare hết hạn, dán link mới vào đây là dùng tiếp được ngay</p>
+          </div>
+        </div>
+        <button class="modal-close" id="closeSettingsBtn">&times;</button>
+      </div>
+
+      <div class="modal-body-scroll">
+        <!-- Test URL -->
+        <div class="quick-test-card">
+          <div class="test-label">Dán link mới để test thử:</div>
+          <div class="test-row">
+            <input type="text" class="input-modern mono" id="testUrlInput" placeholder="https://...trycloudflare.com/api/tx">
+            <button class="btn-check-ping" id="runTestUrlBtn">Test Ping</button>
+          </div>
+          <div class="test-msg hidden" id="testResultBox"></div>
+        </div>
+
+        <!-- Table of Endpoints -->
+        <div class="endpoints-card-list" id="endpointsTableBody">
+          <!-- Rendered in JS -->
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn-done" id="closeSettingsFooterBtn">Xong & Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Message -->
+  <div class="toast-box" id="toastContainer"></div>
+
+  <!-- App Script -->
+  <script src="app.js"></script>
+</body>
+</html>

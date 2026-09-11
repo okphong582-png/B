@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADMIN PANEL - QUẢN LÝ TẠO TOKEN BẢN QUYỀN TELEGRAM BOT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070b14;
+      --card: #0f172a;
+      --card-hover: #162238;
+      --border: rgba(255, 255, 255, 0.08);
+      --gold: #ffd700;
+      --cyan: #00f0ff;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --font: 'Outfit', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+      background-image: radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.18) 0%, transparent 60%);
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    /* Header */
+    .admin-header {
+      background: var(--card);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .crown { font-size: 32px; }
+    .title-h1 { font-size: 20px; font-weight: 900; color: var(--gold); letter-spacing: 0.5px; }
+    .title-sub { font-size: 12px; color: #94a3b8; }
+    .header-stats {
+      display: flex;
+      gap: 12px;
+    }
+    .stat-badge {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 14px;
+      text-align: center;
+    }
+    .stat-label { font-size: 10px; color: #64748b; font-weight: 800; display: block; }
+    .stat-num { font-size: 18px; font-weight: 900; font-family: var(--mono); color: #fff; }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    /* Form */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      align-items: flex-end;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .input-field, .select-field {
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 13px;
+      font-family: var(--font);
+      outline: none;
+    }
+    .input-field:focus, .select-field:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
+    .mono-input { font-family: var(--mono); }
+    .btn-create {
+      background: linear-gradient(135deg, #ffd700, #ff8800);
+      color: #000;
+      font-weight: 900;
+      font-size: 13px;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+      transition: all 0.2s;
+    }
+    .btn-create:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    th {
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #64748b;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    tr:hover { background: var(--card-hover); }
+
+    .token-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .token-text {
+      font-family: var(--mono);
+      font-weight: 800;
+      color: var(--gold);
+      background: rgba(255, 215, 0, 0.1);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 215, 0, 0.25);
+    }
+    .btn-copy {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .btn-copy:hover { background: #38bdf8; color: #000; }
+
+    .tag-status {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tag-free {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .tag-used {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--rose);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+    .btn-del {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: var(--rose);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-del:hover { background: var(--rose); color: #fff; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      z-index: 1000;
+    }
+  </style>
+  <!-- Firebase JS SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-title">
+        <span class="crown">👑</span>
+        <div>
+          <h1 class="title-h1">TRUNG TÂM CẤP TOKEN BẢN QUYỀN</h1>
+          <p class="title-sub">Kết nối Firebase Realtime Database • Mỗi token cấp cho 1 tài khoản Telegram</p>
+        </div>
+      </div>
+
+      <div class="header-stats">
+        <div class="stat-badge">
+          <span class="stat-label">TỔNG TOKEN</span>
+          <span class="stat-num" id="totalCount">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">CHƯA SỬ DỤNG</span>
+          <span class="stat-num" style="color:var(--emerald);" id="freeCount">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">ĐÃ KÍCH HOẠT</span>
+          <span class="stat-num" style="color:var(--rose);" id="usedCount">0</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Create Form -->
+    <div class="card">
+      <h2 class="card-title">⚡ TẠO MÃ TOKEN MỚI</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="label">Tiền tố (Prefix):</label>
+          <input type="text" id="tokenPrefix" class="input-field mono-input" value="VIP-" placeholder="VD: VIP-">
+        </div>
+
+        <div class="form-group">
+          <label class="label">Thời hạn sử dụng:</label>
+          <select id="tokenDuration" class="select-field">
+            <option value="Vĩnh viễn">Vĩnh viễn (Trọn đời)</option>
+            <option value="30 Ngày">30 Ngày</option>
+            <option value="7 Ngày">7 Ngày</option>
+            <option value="1 Ngày">1 Ngày (Dùng thử)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Ghi chú (Tên khách / SĐT):</label>
+          <input type="text" id="tokenNote" class="input-field" placeholder="VD: Khách Zalo 0988...">
+        </div>
+
+        <div class="form-group">
+          <label class="label">Số lượng cần tạo:</label>
+          <select id="tokenQty" class="select-field">
+            <option value="1">1 Mã Token</option>
+            <option value="5">5 Mã Token</option>
+            <option value="10">10 Mã Token</option>
+          </select>
+        </div>
+
+        <button class="btn-create" id="createTokenBtn">⚡ TẠO MÃ NGAY</button>
+      </div>
+    </div>
+
+    <!-- Table of Tokens -->
+    <div class="card">
+      <h2 class="card-title">📋 DANH SÁCH MÃ TOKEN ĐÃ CẤP</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>MÃ TOKEN</th>
+              <th>THỜI HẠN</th>
+              <th>GHI CHÚ</th>
+              <th>TRẠNG THÁI</th>
+              <th>NGƯỜI KÍCH HOẠT</th>
+              <th>NGÀY TẠO</th>
+              <th>THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody id="tokenTableBody">
+            <tr>
+              <td colspan="7" style="text-align:center; padding:30px; color:#64748b;">Đang đồng bộ dữ liệu từ Firebase...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" style="display:none;"></div>
+
+  <script>
+    // Firebase Config từ người dùng cung cấp
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTnJF15YmZ5aSlkodR9S0QGr7OC2rRvEY",
+      authDomain: "webe-f3a6e.firebaseapp.com",
+      databaseURL: "https://webe-f3a6e-default-rtdb.firebaseio.com",
+      projectId: "webe-f3a6e",
+      storageBucket: "webe-f3a6e.firebasestorage.app",
+      messagingSenderId: "1040643741311",
+      appId: "1:1040643741311:web:42e7c8b638adadff1e514a",
+      measurementId: "G-ETHYJFTD0N"
+    };
+
+    // Khởi tạo Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const tokensRef = db.ref('tokens');
+
+    // Hàm sinh chuỗi ngẫu nhiên
+    function makeRandomKey(len = 8) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let res = '';
+      for (let i = 0; i < len; i++) {
+        res += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return res;
+    }
+
+    // Lắng nghe dữ liệu thời gian thực từ Firebase
+    tokensRef.on('value', (snapshot) => {
+      const data = snapshot.val() || {};
+      renderTable(data);
+    });
+
+    function renderTable(tokensObj) {
+      const tbody = document.getElementById('tokenTableBody');
+      tbody.innerHTML = '';
+
+      const list = Object.values(tokensObj).reverse();
+      let free = 0;
+      let used = 0;
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">Chưa có mã token nào. Hãy bấm "TẠO MÃ NGAY" ở trên!</td></tr>';
+        document.getElementById('totalCount').textContent = 0;
+        document.getElementById('freeCount').textContent = 0;
+        document.getElementById('usedCount').textContent = 0;
+        return;
+      }
+
+      list.forEach(t => {
+        if (t.used) used++;
+        else free++;
+
+        const tr = document.createElement('tr');
+        const userTag = t.used
+          ? `<strong style="color:#38bdf8;">${t.used_by_name || 'User'}</strong> <span style="font-size:11px; color:#64748b;">(ID: ${t.used_by_id})</span>`
+          : '<span style="color:#64748b;">-</span>';
+
+        const statusTag = t.used
+          ? '<span class="tag-status tag-used">🔴 Đã Kích Hoạt</span>'
+          : '<span class="tag-status tag-free">🟢 Chưa Dùng (Sẵn Sàng)</span>';
+
+        tr.innerHTML = `
+          <td>
+            <div class="token-box">
+              <span class="token-text">${t.token}</span>
+              <button class="btn-copy" onclick="copyToken('${t.token}')">Copy</button>
+            </div>
+          </td>
+          <td><strong>${t.duration || 'Vĩnh viễn'}</strong></td>
+          <td>${t.note || '-'}</td>
+          <td>${statusTag}</td>
+          <td>${userTag}</td>
+          <td style="font-size:11px; color:#94a3b8;">${new Date(t.created_at).toLocaleString('vi-VN')}</td>
+          <td>
+            <button class="btn-del" onclick="deleteToken('${t.token}')">Xóa</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('totalCount').textContent = list.length;
+      document.getElementById('freeCount').textContent = free;
+      document.getElementById('usedCount').textContent = used;
+    }
+
+    // Nút tạo token
+    document.getElementById('createTokenBtn').addEventListener('click', async () => {
+      const prefix = document.getElementById('tokenPrefix').value.trim().toUpperCase() || 'VIP-';
+      const duration = document.getElementById('tokenDuration').value;
+      const note = document.getElementById('tokenNote').value.trim() || 'Tạo bởi Admin';
+      const qty = parseInt(document.getElementById('tokenQty').value) || 1;
+
+      const now = new Date().toISOString();
+      const updates = {};
+
+      for (let i = 0; i < qty; i++) {
+        const key = `${prefix}${makeRandomKey(4)}-${makeRandomKey(4)}`;
+        updates[key] = {
+          token: key,
+          duration,
+          note,
+          created_at: now,
+          used: false,
+          used_by_id: null,
+          used_by_name: null,
+          used_at: null
+        };
+      }
+
+      await tokensRef.update(updates);
+      showToast(`Đã tạo thành công ${qty} mã token mới!`);
+    });
+
+    // Copy Token
+    window.copyToken = function(token) {
+      navigator.clipboard.writeText(token).then(() => {
+        showToast(`Đã copy mã: ${token}`);
+      });
+    };
+
+    // Xóa Token
+    window.deleteToken = async function(token) {
+      if (confirm(`Bạn có chắc chắn muốn xóa mã [${token}] không?`)) {
+        await tokensRef.child(token).remove();
+        showToast(`Đã xóa mã ${token}`);
+      }
+    };
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2800);
+    }
+  </script>
+</body>
+</html>

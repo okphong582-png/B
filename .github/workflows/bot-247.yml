@@ -1,0 +1,46 @@
+name: Telegram Bot & Web Tai Xiu 24/7
+
+on:
+  push:
+    branches: [ main, master ]
+  schedule:
+    # Tự động kích hoạt lại mỗi 5 giờ (0h, 5h, 10h, 15h, 20h UTC)
+    - cron: '0 */5 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: bot-running-group
+  cancel-in-progress: false
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 320
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Telegram Bot & Server 24/7
+        env:
+          PORT: 3000
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '8738721874:AAG22QXgkzi8tURDRWJLkmJQUCtdbIxnG2E' }}
+        run: node runner-247.js
+
+      - name: Auto-Trigger Next Run (Self-Restart)
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Kích hoạt phiên kế tiếp để bot duy trì 24/24..."
+          gh workflow run bot-247.yml --ref ${{ github.ref_name }} || true
