@@ -641,36 +641,53 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
       }
     }
 
-    // Lệnh thêm admin: /addadmin <id> <tên>
+    // Lệnh thêm/nâng cấp admin: /addadmin <id> [tên]
     if (text.startsWith('/addadmin')) {
       const parts = text.split(' ').filter(Boolean);
       if (parts.length < 2) {
-        return sendMessage(chatId, `👉 Cú pháp: <code>/addadmin &lt;telegram_id&gt; &lt;tên_admin&gt;</code>\nVí dụ: <code>/addadmin 123456789 AdminPro</code>`);
+        return sendMessage(chatId, `👉 Cú pháp: <code>/addadmin &lt;telegram_id&gt; [tên_admin]</code>\nVí dụ: <code>/addadmin 7769479790 SuperAdmin</code>`);
       }
       const newAdminId = parts[1].trim();
-      const adminName = parts.slice(2).join(' ') || `Admin ${newAdminId}`;
-      const addRes = await firebase.addAdmin(newAdminId, { name: adminName });
+      const adminName = parts.slice(2).join(' ') || '';
+      const addRes = await firebase.promoteToAdmin(newAdminId, 'Super Admin', adminName);
 
       if (addRes.success) {
-        return sendMessage(chatId, `✅ Đã cấp quyền Super Admin cho tài khoản ID: <code>${newAdminId}</code> (${adminName})`);
+        return sendMessage(chatId, `👑 <b>ĐÃ NÂNG LÊN SUPER ADMIN!</b>\nTài khoản ID: <code>${newAdminId}</code> đã nhận toàn bộ quyền quản trị.`);
       } else {
         return sendMessage(chatId, `❌ Thất bại: ${addRes.error}`);
       }
     }
 
-    // Lệnh gỡ admin (chuyển thành user thường): /deladmin <id>
+    // Lệnh gỡ admin (chuyển thành dân thường): /deladmin <id>
     if (text.startsWith('/deladmin')) {
       const parts = text.split(' ').filter(Boolean);
       if (parts.length < 2) {
-        return sendMessage(chatId, `👉 Cú pháp: <code>/deladmin &lt;telegram_id&gt;</code>`);
+        return sendMessage(chatId, `👉 Cú pháp: <code>/deladmin &lt;telegram_id&gt;</code>\nVí dụ: <code>/deladmin 7769479790</code>`);
       }
       const targetId = parts[1].trim();
-      const delRes = await firebase.removeAdmin(targetId);
+      const delRes = await firebase.demoteAdminToUser(targetId);
 
       if (delRes.success) {
-        return sendMessage(chatId, `✅ Đã chuyển tài khoản ID <code>${targetId}</code> về người dùng thường.`);
+        return sendMessage(chatId, `🔄 <b>ĐÃ CHUYỂN THÀNH DÂN THƯỜNG!</b>\nTài khoản ID: <code>${targetId}</code> đã bị thu hồi quyền Admin, phải có token để soi cầu như người dùng bình thường.`);
       } else {
-        return sendMessage(chatId, `❌ Không thể xóa: ${delRes.error}`);
+        return sendMessage(chatId, `❌ Không thể chuyển: ${delRes.error}`);
+      }
+    }
+
+    // Lệnh chuyển đổi qua lại 2 chiều: /chuyenquyen <id>
+    if (text.startsWith('/chuyenquyen')) {
+      const parts = text.split(' ').filter(Boolean);
+      if (parts.length < 2) {
+        return sendMessage(chatId, `👉 Cú pháp: <code>/chuyenquyen &lt;telegram_id&gt;</code>\nVí dụ: <code>/chuyenquyen 7769479790</code>`);
+      }
+      const targetId = parts[1].trim();
+      await firebase.toggleAdminRole(targetId);
+      const isNowAdmin = firebase.isAdmin(targetId);
+
+      if (isNowAdmin) {
+        return sendMessage(chatId, `👑 <b>ĐÃ CHUYỂN SANG ADMIN!</b>\nTài khoản ID: <code>${targetId}</code> đã được nâng lên làm Super Admin.`);
+      } else {
+        return sendMessage(chatId, `🔄 <b>ĐÃ CHUYỂN SANG DÂN THƯỜNG!</b>\nTài khoản ID: <code>${targetId}</code> đã chuyển thành người dùng bình thường.`);
       }
     }
 
@@ -1126,24 +1143,89 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     );
   }
 
-  // Quản lý Admin
-  else if (data === 'admin_manage_admins') {
+  // Quản lý Admin & Chuyển đổi Dân thường qua lại
+  else if (data === 'admin_manage_admins' || data.startsWith('toggle_role_')) {
     if (!isAdmin) return;
-    const adminsObj = await firebase.getAllAdmins();
-    const list = Object.values(adminsObj);
 
-    let text = `👑 <b>DANH SÁCH SUPER ADMIN HIỆN TẠI:</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
-    list.forEach(a => {
-      text += `• <b>${a.name || a.username || 'Admin'}</b> (ID: <code>${a.id}</code>) - ${a.role || 'Admin'}\n`;
-    });
+    if (data.startsWith('toggle_role_')) {
+      const targetId = data.replace('toggle_role_', '');
+      await firebase.toggleAdminRole(targetId);
+      const isNowAdmin = firebase.isAdmin(targetId);
+      if (isNowAdmin) {
+        await sendMessage(chatId, `👑 <b>ĐÃ NÂNG LÊN ADMIN!</b>\nTài khoản ID <code>${targetId}</code> đã nhận lại toàn bộ quyền quản trị.`);
+      } else {
+        await sendMessage(chatId, `🔄 <b>ĐÃ CHUYỂN THÀNH DÂN THƯỜNG!</b>\nTài khoản ID <code>${targetId}</code> đã bị thu hồi quyền quản trị, muốn soi cầu phải dùng token như người bình thường.`);
+      }
+    }
+
+    const adminsObj = await firebase.getAllAdmins();
+    const activeAdmins = [];
+    const demotedUsers = [];
+
+    for (const [id, item] of Object.entries(adminsObj)) {
+      if (!item) continue;
+      const roleStr = String(item.role || '').toLowerCase();
+      const isDemoted = item.is_admin === false ||
+        roleStr === 'user' ||
+        roleStr === 'dân thường' ||
+        roleStr === 'dan thuong' ||
+        roleStr === 'người dùng' ||
+        roleStr === 'nguoi dung';
+
+      if (isDemoted) {
+        demotedUsers.push({ id, ...item });
+      } else {
+        activeAdmins.push({ id, ...item });
+      }
+    }
+
+    let text = `👑 <b>QUẢN LÝ ADMIN & DÂN THƯỜNG (CHUYỂN QUA LẠI 2 CHIỀU)</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `🛡️ <b>ADMIN ĐANG HOẠT ĐỘNG (${activeAdmins.length}):</b>\n`;
+    if (activeAdmins.length === 0) {
+      text += `<i>(Không có Admin nào)</i>\n`;
+    } else {
+      activeAdmins.forEach(a => {
+        text += `• <b>${a.name || a.username || 'Admin'}</b> (<code>${a.id}</code>) - ${a.role || 'Admin'}\n`;
+      });
+    }
+
+    text += `\n👤 <b>DÂN THƯỜNG / ĐÃ HẠ QUYỀN (${demotedUsers.length}):</b>\n`;
+    if (demotedUsers.length === 0) {
+      text += `<i>(Không có tài khoản nào)</i>\n`;
+    } else {
+      demotedUsers.forEach(u => {
+        text += `• <b>${u.name || u.username || 'User'}</b> (<code>${u.id}</code>) - <i>Mất quyền</i>\n`;
+      });
+    }
+
     text += `━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `👉 <b>Để thêm Admin mới:</b> <code>/addadmin &lt;id&gt; &lt;tên&gt;</code>\n`;
-    text += `👉 <b>Để xóa quyền Admin:</b> <code>/deladmin &lt;id&gt;</code>\n`;
-    text += `<i>(Bạn cũng có thể thêm/xóa Admin trực tiếp trên trang web http://localhost:3000/admin.html)</i>`;
+    text += `👉 <b>Lệnh nâng Admin:</b> <code>/addadmin &lt;id&gt; [tên]</code>\n`;
+    text += `👉 <b>Lệnh chuyển Dân thường:</b> <code>/deladmin &lt;id&gt;</code>\n`;
+    text += `👉 <b>Chuyển đổi 2 chiều nhanh:</b> <code>/chuyenquyen &lt;id&gt;</code>\n`;
+    text += `<i>(Hoặc bấm các phím chuyển đổi trực tiếp bên dưới)</i>`;
+
+    const is7769Admin = firebase.isAdmin('7769479790');
+    const is8083Admin = firebase.isAdmin('8083052279');
+
+    const inlineKeyboard = [
+      [
+        {
+          text: is7769Admin ? '🔄 7769479790 ➜ Dân Thường' : '👑 7769479790 ➜ Admin',
+          callback_data: 'toggle_role_7769479790'
+        }
+      ],
+      [
+        {
+          text: is8083Admin ? '🔄 8083052279 ➜ Dân Thường' : '👑 8083052279 ➜ Admin',
+          callback_data: 'toggle_role_8083052279'
+        }
+      ],
+      [{ text: '🔙 Quay Lại Menu Admin', callback_data: 'admin_dashboard' }]
+    ];
 
     return sendMessage(chatId, text, {
       reply_markup: {
-        inline_keyboard: [[{ text: '🔙 Quay Lại', callback_data: 'back_main' }]]
+        inline_keyboard: inlineKeyboard
       }
     });
   }

@@ -292,58 +292,125 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
         <h2 class="card-title" style="color: var(--cyan); margin-bottom: 0;">
           👑 CÀI ĐẶT & QUẢN LÝ QUẢN TRỊ VIÊN (ADMIN)
+    <!-- Admin & User Management Box -->
+    <div class="card" style="border-color: rgba(0, 240, 255, 0.4); background: rgba(0, 240, 255, 0.03);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <h2 class="card-title" style="color: var(--cyan); margin-bottom: 0;">
+          👑 QUẢN LÝ ADMIN & DÂN THƯỜNG (CHUYỂN QUA LẠI 2 CHIỀU)
         </h2>
         <span style="font-size: 12px; color: #94a3b8;">
-          Tổng Quản trị viên: <strong id="adminCountBadge" style="color: var(--cyan); font-family: var(--mono); font-size: 14px;">2</strong>
+          Quản Trị Viên: <strong id="adminCountBadge" style="color: var(--cyan); font-family: var(--mono); font-size: 14px;">0</strong> |
+          Dân Thường: <strong id="demotedCountBadge" style="color: var(--rose); font-family: var(--mono); font-size: 14px;">0</strong>
         </span>
       </div>
       <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">
-        Cấp quyền Admin cho tài khoản mới hoặc chuyển Admin thành User thường (thu hồi quyền quản trị). Dữ liệu đồng bộ trực tiếp với Telegram Bot.
+        Cho phép chuyển đổi linh hoạt 2 chiều: <b>Admin ⇄ Dân thường</b> cho bất kỳ ai (kể cả 2 tài khoản chính <code>7769479790</code> và <code>8083052279</code>). Khi là Dân thường, tài khoản bị thu hồi toàn bộ quyền quản trị và phải có token để soi cầu như người bình thường.
       </p>
 
-      <!-- Add Admin Form -->
-      <div class="form-grid" style="margin-bottom: 20px;">
+      <!-- Quick Switch Cards 1 Chạm -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 22px;">
+        <!-- Card 1: 7769479790 -->
+        <div id="quickCard_7769479790" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 3px;">TÀI KHOẢN CHÍNH 1</div>
+            <div style="font-weight: 800; font-size: 15px; color: #fff;">@spamsmstaken</div>
+            <div style="font-size: 12px; color: var(--gold); font-family: var(--mono);">ID: 7769479790</div>
+            <div id="quickStatus_7769479790" style="margin-top: 6px;">
+              <span class="tag-status" style="background:rgba(255,215,0,0.15); color:var(--gold); border:1px solid rgba(255,215,0,0.3);">👑 Super Admin</span>
+            </div>
+          </div>
+          <div id="quickBtnWrap_7769479790">
+            <button class="btn-del" style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: var(--rose); padding: 8px 14px; font-size: 12px; font-weight: 700;" onclick="toggleAdminRoleQuick('7769479790', 'spamsmstaken')">
+              🔄 Chuyển Dân Thường
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2: 8083052279 -->
+        <div id="quickCard_8083052279" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 3px;">TÀI KHOẢN CHÍNH 2</div>
+            <div style="font-weight: 800; font-size: 15px; color: #fff;">@icebearvndev</div>
+            <div style="font-size: 12px; color: var(--cyan); font-family: var(--mono);">ID: 8083052279</div>
+            <div id="quickStatus_8083052279" style="margin-top: 6px;">
+              <span class="tag-status" style="background:rgba(0,240,255,0.15); color:var(--cyan); border:1px solid rgba(0,240,255,0.3);">👑 Super Admin</span>
+            </div>
+          </div>
+          <div id="quickBtnWrap_8083052279">
+            <button class="btn-del" style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: var(--rose); padding: 8px 14px; font-size: 12px; font-weight: 700;" onclick="toggleAdminRoleQuick('8083052279', 'icebearvndev')">
+              🔄 Chuyển Dân Thường
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add / Set Role Form -->
+      <div class="form-grid" style="margin-bottom: 24px;">
         <div class="form-group">
-          <label class="label">Telegram ID cần thêm làm Admin:</label>
-          <input type="text" id="newAdminId" class="input-field mono-input" placeholder="VD: 123456789 (chỉ nhập số ID)">
+          <label class="label">Telegram ID cần phân quyền:</label>
+          <input type="text" id="newAdminId" class="input-field mono-input" placeholder="VD: 7769479790 hoặc ID bất kỳ">
         </div>
 
         <div class="form-group">
-          <label class="label">Tên Admin / Ghi chú / Username:</label>
-          <input type="text" id="newAdminName" class="input-field" placeholder="VD: Admin Hùng (@hungdev)">
+          <label class="label">Tên hiển thị / Username / Ghi chú:</label>
+          <input type="text" id="newAdminName" class="input-field" placeholder="VD: Quản trị viên Hùng (@hungdev)">
         </div>
 
         <div class="form-group">
-          <label class="label">Phân cấp quyền hạn:</label>
+          <label class="label">Vai trò mong muốn:</label>
           <select id="newAdminRole" class="select-field">
-            <option value="Admin">Admin (Quản trị viên)</option>
-            <option value="Super Admin">Super Admin (Toàn quyền)</option>
+            <option value="Super Admin">👑 Super Admin (Toàn quyền quản trị)</option>
+            <option value="Admin">🛡️ Admin (Quản trị viên thường)</option>
+            <option value="Dân thường">👤 Dân thường (Người dùng bình thường - Mất quyền)</option>
           </select>
         </div>
 
-        <button class="btn-create" id="addAdminBtn" style="background: linear-gradient(135deg, #00f0ff, #0284c7); color: #000;">
-          👑 THÊM ADMIN MỚI
+        <button class="btn-create" id="addAdminBtn" style="background: linear-gradient(135deg, #00f0ff, #0284c7); color: #000; font-weight: 800;">
+          ⚡ CẬP NHẬT VAI TRÒ NGAY
         </button>
       </div>
 
-      <!-- Admin List Table -->
+      <!-- Active Admin List Table -->
       <h3 style="font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-        <span>🛡️</span> DANH SÁCH QUẢN TRỊ VIÊN ĐANG HOẠT ĐỘNG
+        <span>👑</span> DANH SÁCH QUẢN TRỊ VIÊN (ADMIN) ĐANG HOẠT ĐỘNG
       </h3>
-      <div class="table-wrap">
+      <div class="table-wrap" style="margin-bottom: 24px;">
         <table>
           <thead>
             <tr>
               <th>TELEGRAM ID</th>
               <th>TÊN QUẢN TRỊ VIÊN</th>
               <th>VAI TRÒ</th>
-              <th>NGÀY CẤP QUYỀN</th>
-              <th>THAO TÁC</th>
+              <th>CẬP NHẬT</th>
+              <th>THAO TÁC (CHUYỂN QUA LẠI)</th>
             </tr>
           </thead>
           <tbody id="adminTableBody">
             <tr>
               <td colspan="5" style="text-align:center; padding:20px; color:#64748b;">Đang tải danh sách Admin...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Demoted / User List Table -->
+      <h3 style="font-size: 13px; font-weight: 800; color: #94a3b8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+        <span>👤</span> DANH SÁCH DÂN THƯỜNG (ĐÃ HẠ QUYỀN / NGƯỜI DÙNG THƯỜNG)
+      </h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>TELEGRAM ID</th>
+              <th>TÊN TÀI KHOẢN</th>
+              <th>VAI TRÒ</th>
+              <th>THỜI GIAN HẠ QUYỀN</th>
+              <th>THAO TÁC (NÂNG LÊN ADMIN)</th>
+            </tr>
+          </thead>
+          <tbody id="demotedTableBody">
+            <tr>
+              <td colspan="5" style="text-align:center; padding:20px; color:#64748b;">Không có tài khoản dân thường nào.</td>
             </tr>
           </tbody>
         </table>
@@ -602,87 +669,183 @@
       showToast(`Đã tạo thành công ${qty} mã token mới!`);
     });
 
-    // ================= QUẢN LÝ ADMIN =================
+    // ================= QUẢN LÝ ADMIN & DÂN THƯỜNG =================
     const adminsRef = db.ref('system/admins');
-
-    // 2 Admin gốc tối cao mặc định
-    const DEFAULT_ADMINS = {
-      '7769479790': {
-        id: '7769479790',
-        name: 'Super Admin (@spamsmstaken)',
-        username: '@spamsmstaken',
-        role: 'Super Admin',
-        isDefault: true,
-        created_at: '2026-01-01T00:00:00.000Z'
-      },
-      '8083052279': {
-        id: '8083052279',
-        name: 'Super Admin (@icebearvndev)',
-        username: '@icebearvndev',
-        role: 'Super Admin',
-        isDefault: true,
-        created_at: '2026-01-01T00:00:00.000Z'
-      }
-    };
 
     // Lắng nghe danh sách Admin Realtime từ Firebase
     adminsRef.on('value', (snap) => {
       const data = snap.val() || {};
-      renderAdminTable(data);
+      renderAdminTables(data);
     });
 
-    function renderAdminTable(firebaseAdmins) {
-      const tbody = document.getElementById('adminTableBody');
-      tbody.innerHTML = '';
-
-      const merged = { ...DEFAULT_ADMINS, ...firebaseAdmins };
-      const list = Object.values(merged);
-
-      document.getElementById('adminCountBadge').textContent = list.length;
-
-      list.forEach(a => {
-        const tr = document.createElement('tr');
-        const isDefault = a.id === '7769479790' || a.id === '8083052279';
-
-        const roleBadge = isDefault
-          ? `<span class="tag-status" style="background:rgba(255,215,0,0.15); color:var(--gold); border:1px solid rgba(255,215,0,0.3);">👑 ${a.role || 'Super Admin'}</span>`
-          : `<span class="tag-status" style="background:rgba(0,240,255,0.15); color:var(--cyan); border:1px solid rgba(0,240,255,0.3);">🛡️ ${a.role || 'Admin'}</span>`;
-
-        const actionCell = isDefault
-          ? `<button class="btn-copy" style="background:rgba(0,240,255,0.15); border:1px solid rgba(0,240,255,0.3); color:var(--cyan); font-weight:700; padding:4px 10px; margin-right:6px;" onclick="editAdminRole('${a.id}', '${a.name || ''}', '${a.role || 'Super Admin'}')">✏️ Sửa Chức Quyền</button> <span style="font-size:11px; color:#64748b;">(Cố định)</span>`
-          : `<button class="btn-copy" style="background:rgba(0,240,255,0.15); border:1px solid rgba(0,240,255,0.3); color:var(--cyan); font-weight:700; padding:4px 10px; margin-right:6px;" onclick="editAdminRole('${a.id}', '${a.name || ''}', '${a.role || 'Admin'}')">✏️ Sửa Chức Quyền</button>
-             <button class="btn-del" style="background:rgba(244,63,94,0.15); border-color:rgba(244,63,94,0.3); color:var(--rose);" onclick="demoteAdminToUser('${a.id}', '${a.name || a.id}')">🔄 Chuyển thành User thường</button>`;
-
-        tr.innerHTML = `
-          <td><code style="font-family:var(--mono); font-weight:800; color:var(--gold);">${a.id}</code></td>
-          <td><strong style="color:#fff;">${a.name || a.username || 'Admin ' + a.id}</strong></td>
-          <td>${roleBadge}</td>
-          <td style="font-size:11px; color:#94a3b8;">${a.created_at ? new Date(a.created_at).toLocaleString('vi-VN') : 'Mặc định'}</td>
-          <td>${actionCell}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    function isAccountAdmin(a) {
+      if (!a) return false;
+      if (a.is_admin === false) return false;
+      const role = String(a.role || '').trim().toLowerCase();
+      if (role === 'user' || role === 'dân thường' || role === 'dan thuong' || role === 'người dùng' || role === 'nguoi dung') {
+        return false;
+      }
+      return true;
     }
 
-    // Chỉnh sửa chức quyền Admin (Cho cả 2 Admin cố định)
+    function renderAdminTables(data) {
+      const adminList = [];
+      const demotedList = [];
+
+      Object.values(data).forEach(item => {
+        if (isAccountAdmin(item)) {
+          adminList.push(item);
+        } else {
+          demotedList.push(item);
+        }
+      });
+
+      document.getElementById('adminCountBadge').textContent = adminList.length;
+      document.getElementById('demotedCountBadge').textContent = demotedList.length;
+
+      // 1. Cập nhật Quick Switch Cards cho 2 tài khoản chính
+      updateQuickCard('7769479790', 'spamsmstaken', data['7769479790']);
+      updateQuickCard('8083052279', 'icebearvndev', data['8083052279']);
+
+      // 2. Render Active Admins Table
+      const adminTbody = document.getElementById('adminTableBody');
+      adminTbody.innerHTML = '';
+
+      if (adminList.length === 0) {
+        adminTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#f43f5e;">Hiện chưa có Admin nào! Hãy thêm hoặc nâng quyền bên dưới.</td></tr>';
+      } else {
+        adminList.forEach(a => {
+          const tr = document.createElement('tr');
+          const isSuper = (a.role || '').toLowerCase().includes('super') || a.id === '7769479790' || a.id === '8083052279';
+
+          const roleBadge = isSuper
+            ? `<span class="tag-status" style="background:rgba(255,215,0,0.15); color:var(--gold); border:1px solid rgba(255,215,0,0.3);">👑 ${a.role || 'Super Admin'}</span>`
+            : `<span class="tag-status" style="background:rgba(0,240,255,0.15); color:var(--cyan); border:1px solid rgba(0,240,255,0.3);">🛡️ ${a.role || 'Admin'}</span>`;
+
+          tr.innerHTML = `
+            <td><code style="font-family:var(--mono); font-weight:800; color:var(--gold);">${a.id}</code></td>
+            <td><strong style="color:#fff;">${a.name || a.username || 'Admin ' + a.id}</strong></td>
+            <td>${roleBadge}</td>
+            <td style="font-size:11px; color:#94a3b8;">${a.updated_at ? new Date(a.updated_at).toLocaleString('vi-VN') : (a.created_at ? new Date(a.created_at).toLocaleString('vi-VN') : 'Ban đầu')}</td>
+            <td>
+              <button class="btn-copy" style="background:rgba(0,240,255,0.15); border:1px solid rgba(0,240,255,0.3); color:var(--cyan); font-weight:700; padding:4px 9px; margin-right:6px;" onclick="editAdminRole('${a.id}', '${escapeQuotes(a.name || '')}', '${escapeQuotes(a.role || 'Super Admin')}')">✏️ Sửa Chức Vụ</button>
+              <button class="btn-del" style="background:rgba(244,63,94,0.15); border-color:rgba(244,63,94,0.3); color:var(--rose); font-weight:700; padding:4px 9px; margin-right:6px;" onclick="demoteAdminToUser('${a.id}', '${escapeQuotes(a.name || a.id)}')">🔄 Chuyển Dân Thường</button>
+              <button class="btn-del" style="background:transparent; border-color:#475569; color:#94a3b8; padding:4px 8px;" onclick="deleteAdminPermanently('${a.id}', '${escapeQuotes(a.name || a.id)}')">🗑️</button>
+            </td>
+          `;
+          adminTbody.appendChild(tr);
+        });
+      }
+
+      // 3. Render Demoted / User Table
+      const demotedTbody = document.getElementById('demotedTableBody');
+      demotedTbody.innerHTML = '';
+
+      if (demotedList.length === 0) {
+        demotedTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b;">Không có tài khoản dân thường nào.</td></tr>';
+      } else {
+        demotedList.forEach(u => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><code style="font-family:var(--mono); font-weight:700; color:#94a3b8;">${u.id}</code></td>
+            <td><strong style="color:#cbd5e1;">${u.name || u.username || 'Người dùng ' + u.id}</strong></td>
+            <td><span class="tag-status" style="background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.3);">👤 Dân thường (Mất quyền)</span></td>
+            <td style="font-size:11px; color:#94a3b8;">${u.demoted_at ? new Date(u.demoted_at).toLocaleString('vi-VN') : 'Đã chuyển'}</td>
+            <td>
+              <button class="btn-copy" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:var(--emerald); font-weight:700; padding:4px 10px; margin-right:6px;" onclick="promoteUserToAdmin('${u.id}', '${escapeQuotes(u.name || u.id)}')">👑 Nâng Lại Thành Admin</button>
+              <button class="btn-del" style="background:transparent; border-color:#475569; color:#94a3b8; padding:4px 8px;" onclick="deleteAdminPermanently('${u.id}', '${escapeQuotes(u.name || u.id)}')">🗑️</button>
+            </td>
+          `;
+          demotedTbody.appendChild(tr);
+        });
+      }
+    }
+
+    function escapeQuotes(str) {
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function updateQuickCard(id, defaultUsername, accountData) {
+      const cardWrap = document.getElementById(`quickCard_${id}`);
+      const statusWrap = document.getElementById(`quickStatus_${id}`);
+      const btnWrap = document.getElementById(`quickBtnWrap_${id}`);
+      if (!cardWrap || !statusWrap || !btnWrap) return;
+
+      const isAdmin = isAccountAdmin(accountData);
+
+      if (isAdmin) {
+        cardWrap.style.borderColor = 'rgba(255, 215, 0, 0.4)';
+        statusWrap.innerHTML = `<span class="tag-status" style="background:rgba(255,215,0,0.15); color:var(--gold); border:1px solid rgba(255,215,0,0.3);">👑 ${accountData ? (accountData.role || 'Super Admin') : 'Super Admin'} (Đang là Admin)</span>`;
+        btnWrap.innerHTML = `
+          <button class="btn-del" style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: var(--rose); padding: 8px 14px; font-size: 12px; font-weight: 700; cursor:pointer;" onclick="toggleAdminRoleQuick('${id}', '${defaultUsername}', true)">
+            🔄 Chuyển Dân Thường
+          </button>
+        `;
+      } else {
+        cardWrap.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+        statusWrap.innerHTML = `<span class="tag-status" style="background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.3);">👤 Dân thường (Mất quyền)</span>`;
+        btnWrap.innerHTML = `
+          <button class="btn-copy" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: var(--emerald); padding: 8px 14px; font-size: 12px; font-weight: 800; cursor:pointer;" onclick="toggleAdminRoleQuick('${id}', '${defaultUsername}', false)">
+            👑 Nâng Lại Làm Admin
+          </button>
+        `;
+      }
+    }
+
+    // Chuyển đổi nhanh 1 chạm cho 2 tài khoản chính
+    window.toggleAdminRoleQuick = async function(id, defaultUsername, currentIsAdmin) {
+      const now = new Date().toISOString();
+      if (currentIsAdmin) {
+        if (!confirm(`Bạn có chắc chắn muốn chuyển tài khoản [${defaultUsername}] (ID: ${id}) thành DÂN THƯỜNG?\n\nTài khoản này sẽ mất toàn bộ quyền quản trị bot ngay lập tức, muốn soi cầu phải có token như người dùng bình thường!`)) {
+          return;
+        }
+        await adminsRef.child(id).update({
+          id: String(id),
+          username: `@${defaultUsername}`,
+          name: `User (@${defaultUsername})`,
+          role: 'Dân thường',
+          is_admin: false,
+          demoted_at: now,
+          updated_at: now
+        });
+        showToast(`Đã chuyển @${defaultUsername} thành Dân thường thành công!`);
+      } else {
+        await adminsRef.child(id).update({
+          id: String(id),
+          username: `@${defaultUsername}`,
+          name: `Super Admin (@${defaultUsername})`,
+          role: 'Super Admin',
+          is_admin: true,
+          promoted_at: now,
+          updated_at: now
+        });
+        showToast(`Đã khôi phục quyền Super Admin cho @${defaultUsername} thành công!`);
+      }
+    };
+
+    // Chỉnh sửa chức quyền Admin
     window.editAdminRole = async function(adminId, currentName, currentRole) {
       const newName = prompt(`Sửa tên hiển thị / Ghi chú cho Admin ID [${adminId}]:`, currentName || `Admin ${adminId}`);
       if (newName === null) return;
 
-      const newRole = prompt(`Nhập chức quyền / vai trò mới (Ví dụ: Super Admin, Chủ Hệ Thống, Tổng Quản Trị, Quản Lý...):`, currentRole || 'Super Admin');
+      const newRole = prompt(`Nhập chức vụ / vai trò mới (Ví dụ: Super Admin, Quản Lý, Hỗ Trợ, hoặc Dân thường):`, currentRole || 'Super Admin');
       if (newRole === null || !newRole.trim()) return;
+
+      const roleTrim = newRole.trim();
+      const isDemoted = roleTrim.toLowerCase() === 'dân thường' || roleTrim.toLowerCase() === 'user' || roleTrim.toLowerCase() === 'dan thuong';
 
       await adminsRef.child(adminId).update({
         id: String(adminId),
         name: newName.trim() || `Admin ${adminId}`,
-        role: newRole.trim(),
+        role: roleTrim,
+        is_admin: !isDemoted,
         updated_at: new Date().toISOString()
       });
 
-      showToast(`Đã cập nhật chức quyền thành [${newRole.trim()}] cho Admin ${adminId}!`);
+      showToast(`Đã cập nhật vai trò thành [${roleTrim}] cho tài khoản ${adminId}!`);
     };
 
-    // Nút Thêm Admin Mới
+    // Thêm / Cập nhật Admin hoặc Dân thường từ Form
     document.getElementById('addAdminBtn').addEventListener('click', async () => {
       const idInput = document.getElementById('newAdminId');
       const nameInput = document.getElementById('newAdminName');
@@ -693,32 +856,60 @@
       const role = roleInput.value;
 
       if (!id || !/^\d+$/.test(id)) {
-        alert('Vui lòng nhập Telegram ID hợp lệ (chỉ bao gồm các chữ số, ví dụ 123456789)!');
+        alert('Vui lòng nhập Telegram ID hợp lệ (chỉ bao gồm các chữ số, ví dụ 7769479790)!');
         return;
       }
 
-      await adminsRef.child(id).set({
+      const isDemoted = role === 'Dân thường';
+      const now = new Date().toISOString();
+
+      await adminsRef.child(id).update({
         id: String(id),
-        name: name || `Admin ${id}`,
-        role: role || 'Admin',
-        created_at: new Date().toISOString()
+        name: name || (isDemoted ? `Người dùng ${id}` : `Admin ${id}`),
+        role: role,
+        is_admin: !isDemoted,
+        updated_at: now
       });
 
-      showToast(`Đã cấp quyền ${role} cho tài khoản ID: ${id} thành công!`);
+      showToast(`Đã phân quyền [${role}] cho tài khoản ID: ${id} thành công!`);
       idInput.value = '';
       nameInput.value = '';
     });
 
-    // Chuyển Admin thành User thường (Gỡ quyền Admin)
+    // Chuyển Admin thành Dân thường (Gỡ quyền Admin)
     window.demoteAdminToUser = async function(adminId, adminName) {
-      if (adminId === '7769479790' || adminId === '8083052279') {
-        alert('Hai tài khoản này là Super Admin cố định của hệ thống!');
-        return;
+      if (confirm(`Bạn có chắc chắn muốn chuyển tài khoản [${adminName}] (ID: ${adminId}) thành DÂN THƯỜNG?\n\nTài khoản sẽ mất quyền quản trị và phải có token để soi cầu!`)) {
+        const now = new Date().toISOString();
+        await adminsRef.child(adminId).update({
+          id: String(adminId),
+          role: 'Dân thường',
+          is_admin: false,
+          demoted_at: now,
+          updated_at: now
+        });
+        showToast(`Đã chuyển tài khoản ID ${adminId} thành Dân thường!`);
       }
+    };
 
-      if (confirm(`Bạn có chắc chắn muốn chuyển Admin [${adminName}] (ID: ${adminId}) thành User thường không?\n\nTài khoản này sẽ mất toàn bộ quyền quản trị bot ngay lập tức!`)) {
-        await adminsRef.child(adminId).remove();
-        showToast(`Đã chuyển tài khoản ID ${adminId} thành User thường!`);
+    // Nâng Dân thường lên lại làm Admin
+    window.promoteUserToAdmin = async function(userId, userName) {
+      const now = new Date().toISOString();
+      const defaultRole = (userId === '7769479790' || userId === '8083052279') ? 'Super Admin' : 'Admin';
+      await adminsRef.child(userId).update({
+        id: String(userId),
+        role: defaultRole,
+        is_admin: true,
+        promoted_at: now,
+        updated_at: now
+      });
+      showToast(`Đã nâng cấp tài khoản ID ${userId} lên làm ${defaultRole} thành công!`);
+    };
+
+    // Xóa vĩnh viễn khỏi danh sách
+    window.deleteAdminPermanently = async function(id, name) {
+      if (confirm(`Bạn có chắc chắn muốn xóa hoàn toàn tài khoản [${name}] (ID: ${id}) khỏi hệ thống?`)) {
+        await adminsRef.child(id).remove();
+        showToast(`Đã xóa tài khoản ID ${id}!`);
       }
     };
 
