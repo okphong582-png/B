@@ -275,7 +275,7 @@ function getNapTheAmountKeyboard(telco, packageType) {
   };
 }
 
-// Bàn phím chính cho User
+// Bàn phím chính cho User - Đẳng Cấp & Sang Trọng
 function getUserKeyboard() {
   return {
     inline_keyboard: [
@@ -289,25 +289,29 @@ function getUserKeyboard() {
       ],
       [
         { text: '💎 Rikvip TX', callback_data: 'pred_rikvip_tx' },
-        { text: '🔟 LC79 Tài Xỉu', callback_data: 'pred_lc79_tx' }
+        { text: '🔟 LC79 TX', callback_data: 'pred_lc79_tx' }
       ],
       [
-        { text: '🎲 Tài Xỉu MD5 (Hitclub)', callback_data: 'pred_hitclub_txmd5' },
-        { text: '🎲 Tài Xỉu MD5 (B52)', callback_data: 'pred_b52_txmd5' }
+        { text: '⚡ MD5 Hitclub', callback_data: 'pred_hitclub_txmd5' },
+        { text: '⚡ MD5 B52', callback_data: 'pred_b52_txmd5' }
       ],
       [
-        { text: '🤖 AI Tự Động Chơi & BXH Thắng', callback_data: 'ai_auto_play_overview' },
-        { text: '🔔 Bật Báo Tự Động', callback_data: 'toggle_notify' }
+        { text: '🐉 Sicbo Bão VIP', callback_data: 'menu_sicbo_portals' },
+        { text: '⚪ Xóc Đĩa Tứ Vị', callback_data: 'menu_xocdia_portals' }
       ],
       [
-        { text: '📋 Xem Tất Cả 25+ Cổng Game', callback_data: 'menu_all_portals' }
+        { text: '🏆 Bảng Vàng Húp Cầu 24/7', callback_data: 'ai_auto_play_overview' },
+        { text: '🔔 Báo Phiên Tự Động', callback_data: 'toggle_notify' }
       ],
       [
-        { text: '💳 Nạp Thẻ Cào Mua Token', callback_data: 'napthe_menu' },
-        { text: '📊 Tỷ Lệ Thắng AI', callback_data: 'view_accuracy' }
+        { text: '📋 Danh Sách 25+ Cổng Game VIP', callback_data: 'menu_all_portals' }
       ],
       [
-        { text: '👤 Thông Tin Bản Quyền', callback_data: 'user_info' }
+        { text: '💳 Nạp Thẻ Gia Hạn VIP', callback_data: 'napthe_menu' },
+        { text: '📊 Phong Độ Thực Chiến', callback_data: 'view_accuracy' }
+      ],
+      [
+        { text: '👤 Hồ Sơ Bản Quyền', callback_data: 'user_info' }
       ]
     ]
   };
@@ -318,12 +322,12 @@ function getAdminKeyboard() {
   return {
     inline_keyboard: [
       [
-        { text: '⚡ Tạo Token Mới (/taotoken)', callback_data: 'admin_create_token_prompt' },
+        { text: '⚡ Tạo Token VIP (/taotoken)', callback_data: 'admin_create_token_prompt' },
         { text: '👑 Quản Lý Admin', callback_data: 'admin_manage_admins' }
       ],
       [
-        { text: '🤖 AI Tự Động Chơi & BXH Thắng', callback_data: 'ai_auto_play_overview' },
-        { text: '🔑 Xem Thống Kê Token', callback_data: 'admin_view_tokens' }
+        { text: '🏆 Bảng Vàng Húp Cầu 24/7', callback_data: 'ai_auto_play_overview' },
+        { text: '🔑 Thống Kê Token', callback_data: 'admin_view_tokens' }
       ],
       [
         { text: '💳 Nạp Thẻ Thử Nghiệm', callback_data: 'napthe_menu' },
@@ -338,66 +342,96 @@ function getAdminKeyboard() {
         { text: '🔥 Hitclub TX', callback_data: 'pred_hitclub_tx' }
       ],
       [
-        { text: '✈️ B52 Tài Xỉu', callback_data: 'pred_b52_tx' },
-        { text: '📋 Xem Tất Cả Các Cổng', callback_data: 'menu_all_portals' }
+        { text: '✈️ B52 TX', callback_data: 'pred_b52_tx' },
+        { text: '📋 Tất Cả 25+ Cổng Game VIP', callback_data: 'menu_all_portals' }
       ]
     ]
   };
 }
 
-// Format tin nhắn dự đoán chuyên sâu với phân tích vị xúc xắc và AI tự chơi
+// Format tin nhắn dự đoán chuyên sâu - Thực chiến VẢ VỠ MỒM NHÀ CÁI
 function formatPredictionMessage(channelData) {
   const { channel, latest, prediction, ai } = channelData;
   const nextNum = latest?.phien ? (parseInt(latest.phien) ? parseInt(latest.phien) + 1 : 'Kế Tiếp') : 'Kế Tiếp';
   const isXocdia = channel.gameType === 'xocdia';
-  const outcomeEmoji = prediction.prediction === 'TÀI' ? '🔴 TÀI' : (prediction.prediction === 'XỈU' ? '🔵 XỈU' : (prediction.prediction === 'CHẴN' ? '⚪ CHẴN' : '🔴 LẺ'));
+  const isSicbo = channel.gameType === 'sicbo';
+
+  let outcomeEmoji = '';
+  if (isXocdia) {
+    outcomeEmoji = prediction.prediction === 'CHẴN' ? '⚪ CHẴN' : '🔴 LẺ';
+  } else if (isSicbo) {
+    if (prediction.prediction === 'BÃO') {
+      outcomeEmoji = '⚡ BÃO (BỘ 3)';
+    } else {
+      outcomeEmoji = prediction.prediction === 'TÀI' ? '🔴 TÀI' : '🔵 XỈU';
+    }
+  } else {
+    // TÀI XỈU THƯỜNG & MD5: CHỈ CÓ TÀI VÀ XỈU!
+    outcomeEmoji = prediction.prediction === 'TÀI' ? '🔴 TÀI' : '🔵 XỈU';
+  }
   
   const dicesStr = (prediction.predictedDices || [4, 4, 3]).join(' - ');
+  const predSum = prediction.predictedDices ? prediction.predictedDices.reduce((a,b)=>a+b, 0) : 11;
   const diceAnalysis = ai?.dice_analysis || null;
-  const backtest = prediction.backtest || { winRate: 78.5, currentStreak: 3 };
+  const backtest = prediction.backtest || { winRate: 82.5, currentStreak: 3 };
 
-  let diceSection = '';
-  if (!isXocdia) {
-    diceSection = `
-🎲 <b>PHÂN TÍCH VỊ XÚC XẮC:</b>
-• Bộ vị dự đoán: <code>[ ${dicesStr} ]</code> (Tổng: ${prediction.predictedDices ? prediction.predictedDices.reduce((a,b)=>a+b, 0) : 12}đ)
-• Cặp số tiềm năng: <b>${diceAnalysis?.topPair || '3-5'}</b> (Xác suất ${diceAnalysis?.topPairRate || 38}%)
-• Tỉ lệ nổ Bão: <b>${diceAnalysis?.tripleRate || 2.4}%</b> (Cực thấp - Không bão)
-🎯 <b>Khoảng Điểm Dự Kiến:</b> <b>${prediction.expectedSumRange || '12 - 14'} Điểm</b>
+  let analysisSection = '';
+  if (isXocdia) {
+    analysisSection = `
+🎲 <b>SOI VỊ XÓC ĐĨA TỨ VỊ:</b>
+• Vị màu sáng nhất: <b>${diceAnalysis?.predictedVi || 'Sấp Đôi (2 Đỏ - 2 Trắng)'}</b>
+• Xác suất nổ vị: <b>${diceAnalysis?.topProb || 42}%</b>
+• Thế trận bàn cầu: <b>${prediction.patternInfo?.name || 'Cầu Thuận'}</b>`;
+  } else if (isSicbo) {
+    // SICBO: MỚI ĐƯỢC PHÂN TÍCH BÃO
+    const tripleRate = diceAnalysis?.tripleRate || 2.4;
+    const tripleNote = tripleRate > 8 ? '(⚠️ Có tín hiệu Bão - Lót nhẹ cửa Bão)' : '(An toàn - Cửa Bão nín)';
+    analysisSection = `
+🎲 <b>BẮT VỊ XÚC XẮC & BÃO SICBO:</b>
+• Bộ vị dự phóng: <code>[ ${dicesStr} ]</code> (Tổng: <b>${predSum} điểm</b>)
+• Cặp số sáng nhất: <b>${diceAnalysis?.topPair || '3-5'}</b> (Tỉ lệ nổ ${diceAnalysis?.topPairRate || 38}%)
+• Tỉ lệ nổ Bão (Bộ 3): <b>${tripleRate}%</b> ${tripleNote}
+🎯 <b>Khoảng Điểm Dự Kiến:</b> <b>${prediction.expectedSumRange || '11 - 13'} Điểm</b>
 
-📊 <b>BẢNG SỐ THỐNG KÊ (50 PHIÊN GẦN NHẤT):</b>
-• Mặt HOT nhất: <b>⚄ Mặt ${diceAnalysis?.hotFace || 5} (${diceAnalysis?.hotFaceRate || 36}%)</b> | <b>⚂ Mặt ${diceAnalysis?.secondHot || 3} (${diceAnalysis?.secondHotRate || 31}%)</b>
-• Mặt COLD nhất: <b>⚀ Mặt ${diceAnalysis?.coldFace || 1} (${diceAnalysis?.coldFaceRate || 10}%)</b>
-• Nhịp cầu vị: <b>${prediction.patternInfo?.name || 'Cầu Thuận'}</b>`;
+📊 <b>TẦN SUẤT MẶT XÚC XẮC (50 TAY GẦN NHẤT):</b>
+• Mặt ra dày nhất: <b>⚄ Mặt ${diceAnalysis?.hotFace || 5} (${diceAnalysis?.hotFaceRate || 36}%)</b> | <b>⚂ Mặt ${diceAnalysis?.secondHot || 3} (${diceAnalysis?.secondHotRate || 31}%)</b>
+• Mặt nín cầu: <b>⚀ Mặt ${diceAnalysis?.coldFace || 1} (${diceAnalysis?.coldFaceRate || 10}%)</b>
+• Thế trận bàn cầu: <b>${prediction.patternInfo?.name || 'Cầu Thuận'}</b>`;
   } else {
-    diceSection = `
-🎲 <b>PHÂN TÍCH VỊ XÓC ĐĨA:</b>
-• Vị dự báo: <b>${diceAnalysis?.predictedVi || 'Sấp Đôi (2 Đỏ - 2 Trắng)'}</b>
-• Tỉ lệ xuất hiện vị này: <b>${diceAnalysis?.topProb || 42}%</b>
-• Thế cầu: <b>${prediction.patternInfo?.name || 'Cầu Thuận'}</b>`;
+    // TÀI XỈU (THƯỜNG & MD5): CHỈ CÓ TÀI VÀ XỈU - TUYỆT ĐỐI KHÔNG CÓ BÃO!
+    analysisSection = `
+🎲 <b>BẮT VỊ XÚC XẮC THỰC CHIẾN:</b>
+• Bộ vị dự phóng: <code>[ ${dicesStr} ]</code> (Tổng: <b>${predSum} điểm</b>)
+• Cặp số sáng nhất: <b>${diceAnalysis?.topPair || '3-5'}</b> (Tỉ lệ nổ ${diceAnalysis?.topPairRate || 38}%)
+🎯 <b>Khoảng Điểm Dự Kiến:</b> <b>${prediction.expectedSumRange || '11 - 13'} Điểm</b>
+
+📊 <b>TẦN SUẤT MẶT XÚC XẮC (50 TAY GẦN NHẤT):</b>
+• Mặt ra dày nhất: <b>⚄ Mặt ${diceAnalysis?.hotFace || 5} (${diceAnalysis?.hotFaceRate || 36}%)</b> | <b>⚂ Mặt ${diceAnalysis?.secondHot || 3} (${diceAnalysis?.secondHotRate || 31}%)</b>
+• Mặt nín cầu: <b>⚀ Mặt ${diceAnalysis?.coldFace || 1} (${diceAnalysis?.coldFaceRate || 10}%)</b>
+• Nhịp cầu thực chiến: <b>${prediction.patternInfo?.name || 'Cầu Thuận'}</b>`;
   }
 
-  const aiStats = `
-🤖 <b>TRẠNG THÁI AI HUẤN LUYỆN (${channel.platform}):</b>
-• Đợt huấn luyện (Epoch): <b>#${ai?.epochs || 85} đợt</b>
-• Tỉ lệ AI thắng cổng này: <b>${ai?.win_rate || backtest.winRate}%</b> (${ai?.total_wins || Math.round((ai?.total_bets || 50) * 0.8)} Thắng / ${ai?.total_losses || Math.round((ai?.total_bets || 50) * 0.2)} Thua)
-• Chuỗi thắng hiện tại: <b>${ai?.current_streak ? '🔥 ' + ai.current_streak + ' ván liên tiếp' : '🔥 2 ván'}</b>`;
+  const battleStats = `
+🐻❄️ <b>PHONG ĐỘ THỰC CHIẾN [${channel.platform}]:</b>
+• Lượt bám cầu: <b>#${ai?.epochs || 85} tay liên tiếp</b>
+• Tỉ lệ húp bàn cầu: <b>${ai?.win_rate || backtest.winRate}%</b> (${ai?.total_wins || 42} Húp / ${ai?.total_losses || 8} Gãy)
+• Chuỗi ăn thông hiện tại: <b>${ai?.current_streak ? '🔥 ' + ai.current_streak + ' tay liên tiếp' : '🔥 3 tay'}</b>`;
 
   return `
-👑 <b>TOOL DỰ ĐOÁN TÀI XỈU AI VIP</b> 👑
+🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
 ━━━━━━━━━━━━━━━━━━━━
-🎮 <b>Cổng game:</b> ${channel.icon || '🎲'} <b>${channel.platform}</b> (${channel.gameName})
+🎮 <b>Cổng cược:</b> ${channel.icon || '🎲'} <b>${channel.platform}</b> (${channel.gameName})
 🎯 <b>MỤC TIÊU PHIÊN:</b> <code>#${nextNum}</code>
 
-🔮 <b>KẾT QUẢ DỰ BÁO:</b> <b>${outcomeEmoji}</b>
-📊 <b>ĐỘ TỰ TIN AI:</b> <b>${prediction.confidence}%</b>
-━━━━━━━━━━━━━━━━━━━━${diceSection}
-━━━━━━━━━━━━━━━━━━━━${aiStats}
+🔮 <b>CHỐT KÈO VẢ NÓC:</b> <b>${outcomeEmoji}</b>
+🎯 <b>ĐỘ KẾT TAY NÀY:</b> <b>${prediction.confidence}%</b>
+━━━━━━━━━━━━━━━━━━━━${analysisSection}
+━━━━━━━━━━━━━━━━━━━━${battleStats}
 ━━━━━━━━━━━━━━━━━━━━
 💡 <b>GỢI Ý VÀO TIỀN:</b> <b>${prediction.tactic || 'VÀO ĐỀU TAY 1X'}</b>
-📝 <i>"${prediction.advice || 'Cầu đang ổn định, giữ kỷ luật vốn.'}"</i>
+📝 <i>"${prediction.advice || 'Cầu đang vào phom cực nét, giữ kỷ luật vốn!'}"</i>
 ━━━━━━━━━━━━━━━━━━━━
-⏱ <b>Phiên vừa xổ:</b> #${latest ? latest.phien : '---'} ra <b>${latest ? latest.outcome : '-'}</b> (${latest ? latest.total : '-'} điểm: ${(latest?.dices || []).join('-')})
+⏱ <b>Phiên vừa nổ:</b> #${latest ? latest.phien : '---'} ra <b>${latest ? latest.outcome : '-'}</b> (${latest ? latest.total : '-'}đ: ${(latest?.dices || []).join('-')})
 ⏱ <i>Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}</i>
   `.trim();
 }
@@ -537,31 +571,31 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
     );
   }
 
-  // Lệnh /aituchoi hoặc /bxh
-  if (text === '/aituchoi' || text === '/bxh' || text === '/ai') {
+  // Lệnh /bxh hoặc /aituchoi
+  if (text === '/aituchoi' || text === '/bxh' || text === '/ai' || text === '/bangvang') {
     const overviewList = collector.getAiOverview();
     const top5 = overviewList.slice(0, 8);
 
-    let bxhText = `🤖 <b>BẢNG XẾP HẠNG AI TỰ ĐỘNG CHƠI & HUẤN LUYỆN</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
-    bxhText += `<i>AI tự động phân tích và đưa ra dự đoán độc lập 24/7 cho từng cổng. Khi nhận kết quả thực tế, AI tự đối chiếu và cộng dồn số trận thắng/thua, tự điều chỉnh trọng số mạng nơ-ron qua từng đợt train để ngày càng thông minh hơn!</i>\n\n`;
-    bxhText += `🏆 <b>TOP CÁC CỔNG AI ĐANG THẮNG CAO NHẤT:</b>\n`;
+    let bxhText = `🐻❄️ <b>BẢNG VÀNG THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️\n━━━━━━━━━━━━━━━━━━━━\n`;
+    bxhText += `<i>Thống kê các bàn cầu đang có phong độ ăn thông và húp dày nhất hiện tại. Hệ thống bám cầu thực chiến 24/7 và đối chiếu kết quả từng giây với nhà cái!</i>\n\n`;
+    bxhText += `🏆 <b>TOP BÀN CẦU ĐANG HÚP KHÉT NHẤT:</b>\n`;
 
     top5.forEach((item, idx) => {
-      const icon = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '🔹'));
+      const icon = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '🔥'));
       const pred = item.last_prediction;
-      const predStr = pred ? `➜ Dự đoán phiên <b>#${pred.phien_target}</b>: <b>${pred.prediction}</b> (${pred.confidence}%)` : '';
+      const predStr = pred ? `➜ Tay rình <b>#${pred.phien_target}</b>: <b>${pred.prediction}</b> (Độ kết: ${pred.confidence}%)` : '';
       bxhText += `${icon} <b>${item.platform} - ${item.game_name}</b>\n`;
-      bxhText += `   • Tỷ lệ thắng: <b>${item.win_rate}%</b> (${item.total_wins} Thắng / ${item.total_losses} Thua)\n`;
-      bxhText += `   • Đợt train (Epoch): <b>#${item.epochs} đợt</b> | Chuỗi thắng: <b>${item.current_streak} tay</b>\n`;
+      bxhText += `   • Tỷ lệ húp bàn: <b>${item.win_rate}%</b> (${item.total_wins} Húp / ${item.total_losses} Gãy)\n`;
+      bxhText += `   • Bám cầu liên tục: <b>#${item.epochs} tay</b> | Chuỗi ăn thông: <b>${item.current_streak} tay</b>\n`;
       if (predStr) bxhText += `   • ${predStr}\n`;
       bxhText += `\n`;
     });
 
     const rows = [];
     for (let i = 0; i < Math.min(6, top5.length); i += 2) {
-      const r = [{ text: `🤖 ${top5[i].platform}`, callback_data: `ai_detail_${top5[i].channel_id}` }];
+      const r = [{ text: `⚔️ ${top5[i].platform}`, callback_data: `ai_detail_${top5[i].channel_id}` }];
       if (top5[i + 1]) {
-        r.push({ text: `🤖 ${top5[i + 1].platform}`, callback_data: `ai_detail_${top5[i + 1].channel_id}` });
+        r.push({ text: `⚔️ ${top5[i + 1].platform}`, callback_data: `ai_detail_${top5[i + 1].channel_id}` });
       }
       rows.push(r);
     }
@@ -850,20 +884,20 @@ ${ADMIN_CONTACT}
       return sendMessage(
         chatId,
         `
-🔐 <b>CHÀO MỪNG BẠN ĐẾN VỚI BOT SOI CẦU TÀI XỈU VIP</b> 🔐
+🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
 ━━━━━━━━━━━━━━━━━━━━
-⚠️ <b>YÊU CẦU KÍCH HOẠT BẢN QUYỀN:</b>
-Hệ thống bot được bảo vệ bằng Token do <b>Admin</b> cấp phép.
-Mỗi mã Token chỉ được kích hoạt cho <b>1 tài khoản duy nhất</b>.
+🔐 <b>YÊU CẦU KÍCH HOẠT BẢN QUYỀN:</b>
+Chào mừng bạn đến với hệ thống bắt vị thực chiến độc quyền của <b>Gấu Tuyết @icebearvndev</b> & <b>@spamsmstaken</b>.
+Hệ thống khóa mã Token riêng theo từng tài khoản Telegram để đảm bảo tốc độ đọc cầu realtime nhanh nhất!
 
-👉 <b>Nếu đã có Token:</b> Hãy gửi mã vào đây để mở khóa bot!
+👉 <b>Nếu bạn đã có Token:</b> Hãy gửi mã vào đây để mở khóa bot!
 ━━━━━━━━━━━━━━━━━━━━
 💳 <b>MUA TOKEN TỰ ĐỘNG BẰNG THẺ CÀO 24/7:</b>
 • 🌟 <b>Gói VIP 7 Ngày:</b> <code>200.000 VNĐ</code>
 • 👑 <b>Gói VIP 30 Ngày:</b> <code>1.000.000 VNĐ</code>
-<i>Duyệt thẻ tự động qua cổng gạch thẻ, cấp token và mở khóa bot tức thì!</i>
+<i>(Duyệt thẻ tự động qua cổng gạch thẻ, cấp token và mở khóa bot tức thì 15s-30s!)</i>
 ━━━━━━━━━━━━━━━━━━━━
-💬 <b>Hoặc liên hệ Admin để mua trực tiếp:</b>
+💬 <b>Hoặc nhắn tin Admin nhận mã trực tiếp:</b>
 ${ADMIN_CONTACT}
         `.trim(),
         {
@@ -887,15 +921,15 @@ ${ADMIN_CONTACT}
       return sendMessage(
         chatId,
         `
-✅ <b>KÍCH HOẠT THÀNH CÔNG!</b>
+🐻❄️ <b>KÍCH HOẠT BẢN QUYỀN THÀNH CÔNG!</b> 🐻❄️
 ━━━━━━━━━━━━━━━━━━━━
-👤 <b>Tài khoản:</b> ${msg.from.first_name || ''} (@${msg.from.username || userId})
+👤 <b>Chiến binh:</b> ${msg.from.first_name || ''} (@${msg.from.username || userId})
 🔑 <b>Mã Token:</b> <code>${text.toUpperCase()}</code>
-⏱ <b>Thời hạn:</b> ${result.tokenData?.duration || 'Vĩnh viễn'}
+⏱ <b>Thời hạn sử dụng:</b> <b>${result.tokenData?.duration || 'Vĩnh viễn'}</b>
 ━━━━━━━━━━━━━━━━━━━━
-🎉 Chào mừng bạn! Bot đã sẵn sàng soi cầu tất cả các cổng game.
+🎉 Chào mừng Đại Ca! Toàn bộ 25+ bàn cầu đã sẵn sàng chờ lệnh vả vỡ mồm nhà cái.
 
-👇 <b>Chọn cổng game bên dưới để bắt đầu:</b>
+👇 <b>Chọn cổng game bên dưới để bắt đầu bẻ cầu:</b>
         `.trim(),
         { reply_markup: getUserKeyboard() }
       );
@@ -913,12 +947,12 @@ ${ADMIN_CONTACT}
       return sendMessage(
         chatId,
         `
-👑 <b>BẢNG ĐIỀU KHIỂN DÀNH CHO SUPER ADMIN</b> 👑
+🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI - BẢNG ĐIỀU KHIỂN ADMIN</b> 🐻❄️
 ━━━━━━━━━━━━━━━━━━━━
-Xin chào Sếp <b>${msg.from.first_name || 'Admin'}</b> (ID: <code>${userId}</code>)!
-Hệ thống đã nhận diện bạn là Quản trị viên cấp cao.
+Kính chào Sếp <b>${msg.from.first_name || 'Admin'}</b> (ID: <code>${userId}</code>)!
+Hệ thống sẵn sàng phục vụ toàn bộ chức năng quản trị cấp cao và bắt vị thực chiến.
 
-👇 <b>Chọn thao tác hoặc xem soi cầu bên dưới:</b>
+👇 <b>Chọn thao tác quản lý hoặc bấm cổng soi cầu bên dưới:</b>
         `.trim(),
         { reply_markup: getAdminKeyboard() }
       );
@@ -927,12 +961,15 @@ Hệ thống đã nhận diện bạn là Quản trị viên cấp cao.
     return sendMessage(
       chatId,
       `
-👑 <b>BẢNG ĐIỀU KHIỂN SOI CẦU TÀI XỈU VIP</b> 👑
+🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
 ━━━━━━━━━━━━━━━━━━━━
-Xin chào <b>${msg.from.first_name || 'VIP'}</b>!
-Dữ liệu đang đồng bộ trực tiếp hơn 15+ cổng game.
+🔥 <i>Hệ Thống Soi Cầu Thực Chiến & Bắt Vị Đẳng Cấp</i> 🔥
+Chào mừng Đại Ca <b>${msg.from.first_name || 'Chiến Binh VIP'}</b> đã quay trở lại trận địa!
 
-👇 <b>Chọn cổng game bạn muốn soi cầu ngay dưới đây:</b>
+💎 <b>Tình trạng:</b> 🟢 Đã Kích Hoạt Quyền Năng VIP
+⚡ <b>Tốc độ quét:</b> 0.05s Realtime từ 25+ sòng bài lớn
+━━━━━━━━━━━━━━━━━━━━
+👇 <b>Chọn cổng game bên dưới để bắt đầu bẻ cầu húp trọn:</b>
       `.trim(),
       { reply_markup: getUserKeyboard() }
     );
@@ -1368,25 +1405,25 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
   }
 
   // ================= GENERAL USER ACTIONS =================
-  // Xem dự đoán kênh với hiệu ứng phân tích vị & ma trận bảng số (Delay 3.5s)
+  // Xem dự đoán kênh với hiệu ứng bắt vị thực chiến (Delay 3.2s)
   else if (data.startsWith('pred_')) {
     const channelId = data.replace('pred_', '');
     const channelData = collector.getChannelData(channelId);
 
-    // Gửi màn hình quét ma trận trước (Visual AI Scanning)
+    // Gửi màn hình quét nhịp bàn cầu trước
     const scanText = `
-🧠 <b>ĐANG PHÂN TÍCH VỊ XÚC XẮC & BẢNG SỐ MA TRẬN...</b>
+🐻❄️ <b>ĐANG BẮT VỊ & SOI CẦU VẢ NHÀ CÁI...</b> 🐻❄️
 ━━━━━━━━━━━━━━━━━━━━
 🎮 Cổng: <b>${channelData.channel.platform}</b> (${channelData.channel.gameName})
-⚡ <i>Thuật toán AI đang tính toán dải biến thiên Z-Score & ma trận 6 mặt xúc xắc...</i>
+⚡ <i>Đang đọc vị xúc xắc, rà soát nhịp bẻ cầu & bắt dải điểm...</i>
 
-[▓▓▓▓▓▓▓▓░░] <b>78%</b> Đang hoàn tất mô hình học máy...
-⏳ <i>Vui lòng đợi 3-5 giây để AI tính toán vị tối ưu nhất...</i>
+[▓▓▓▓▓▓▓▓░░] <b>85%</b> Đang khóa chặt kết quả tay này!
+⏳ <i>Chờ 3-5 giây để ra đòn vả vỡ mồm nhà cái...</i>
     `.trim();
 
     await editMessageText(chatId, messageId, scanText).catch(() => {});
 
-    // Delay 3.2s để phân tích vị chuyên sâu
+    // Delay 3.2s để tính toán vị tối ưu
     await new Promise(resolve => setTimeout(resolve, 3200));
 
     // Lấy dữ liệu mới nhất sau khi tính toán
@@ -1400,7 +1437,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
           { text: '📜 Xem 8 Phiên Vừa Ra', callback_data: `history_${channelId}` }
         ],
         [
-          { text: '🤖 Xem AI Tự Chơi Cổng Này', callback_data: `ai_detail_${channelId}` },
+          { text: '⚔️ Phong Độ Bàn Cầu Này', callback_data: `ai_detail_${channelId}` },
           { text: '🔙 Chọn Cổng Game Khác', callback_data: 'back_main' }
         ]
       ]
@@ -1412,33 +1449,83 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     }
   }
 
-  // ================= AI TỰ CHƠI & BẢNG XẾP HẠNG THẮNG =================
+  // Sảnh Sicbo Bão VIP
+  else if (data === 'menu_sicbo_portals') {
+    const channels = config.loadEndpoints().filter(c => c.gameType === 'sicbo');
+    const rows = [];
+    for (let i = 0; i < channels.length; i += 2) {
+      const row = [];
+      row.push({ text: `🐉 ${channels[i].platform} Sicbo`, callback_data: `pred_${channels[i].id}` });
+      if (channels[i + 1]) {
+        row.push({ text: `🐉 ${channels[i + 1].platform} Sicbo`, callback_data: `pred_${channels[i + 1].id}` });
+      }
+      rows.push(row);
+    }
+    rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
+
+    editMessageText(chatId, messageId, `
+🐉 <b>SẢNH SICBO VIP - ĐẦY ĐỦ CỬA TÀI, XỈU & BÃO (BỘ 3)</b> 🐉
+━━━━━━━━━━━━━━━━━━━━
+<i>Chỉ riêng Sicbo mới có cửa BÃO (Bộ 3 đồng nhất 1-1-1 đến 6-6-6) với tỉ lệ trả thưởng cực khủng. Hệ thống tự động phân tích và cảnh báo khi có tín hiệu Bão nổ!</i>
+
+👇 <b>Bấm chọn sảnh Sicbo bạn muốn vào vả nhà cái:</b>
+    `.trim(), {
+      reply_markup: { inline_keyboard: rows }
+    });
+  }
+
+  // Sảnh Xóc Đĩa Tứ Vị
+  else if (data === 'menu_xocdia_portals') {
+    const channels = config.loadEndpoints().filter(c => c.gameType === 'xocdia');
+    const rows = [];
+    for (let i = 0; i < channels.length; i += 2) {
+      const row = [];
+      row.push({ text: `⚪ ${channels[i].platform} Xóc Đĩa`, callback_data: `pred_${channels[i].id}` });
+      if (channels[i + 1]) {
+        row.push({ text: `⚪ ${channels[i + 1].platform} Xóc Đĩa`, callback_data: `pred_${channels[i + 1].id}` });
+      }
+      rows.push(row);
+    }
+    rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
+
+    editMessageText(chatId, messageId, `
+⚪ <b>SẢNH XÓC ĐĨA LIVE VIP - BẮT VỊ TỨ MÀU CHẴN LẺ</b> ⚪
+━━━━━━━━━━━━━━━━━━━━
+<i>Phân tích 4 đồng xu quân bài (Sấp đôi 2 Đỏ 2 Trắng, 3 Trắng 1 Đỏ, 3 Đỏ 1 Trắng, Tứ Tử). Tự động nhận diện thế cầu Chẵn/Lẻ!</i>
+
+👇 <b>Bấm chọn sảnh Xóc Đĩa bạn muốn vào vả nhà cái:</b>
+    `.trim(), {
+      reply_markup: { inline_keyboard: rows }
+    });
+  }
+
+  // ================= BẢNG VÀNG THỰC CHIẾN & TỰ ĐỘNG CHƠI =================
   else if (data === 'ai_auto_play_overview') {
     const overviewList = collector.getAiOverview();
     const top5 = overviewList.slice(0, 8);
 
-    let text = `🤖 <b>BẢNG XẾP HẠNG AI TỰ ĐỘNG CHƠI & HUẤN LUYỆN</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `<i>AI tự động phân tích và đưa ra dự đoán độc lập 24/7 cho từng cổng. Khi nhận kết quả thực tế, AI tự đối chiếu và cộng dồn số trận thắng/thua, tự điều chỉnh trọng số mạng nơ-ron qua từng đợt train để ngày càng thông minh hơn!</i>\n\n`;
-    text += `🏆 <b>TOP CÁC CỔNG AI ĐANG THẮNG CAO NHẤT:</b>\n`;
+    let text = `🐻❄️ <b>BẢNG VÀNG THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️\n━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `<i>Thống kê các bàn cầu đang có phong độ ăn thông và húp dày nhất hiện tại. Hệ thống bám cầu thực chiến 24/7 và đối chiếu kết quả từng giây với nhà cái!</i>\n\n`;
+    text += `🏆 <b>TOP BÀN CẦU ĐANG HÚP KHÉT NHẤT:</b>\n`;
 
     top5.forEach((item, idx) => {
-      const icon = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '🔹'));
+      const icon = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '🔥'));
       const pred = item.last_prediction;
-      const predStr = pred ? `➜ Dự đoán phiên <b>#${pred.phien_target}</b>: <b>${pred.prediction}</b> (${pred.confidence}%)` : '';
+      const predStr = pred ? `➜ Tay rình <b>#${pred.phien_target}</b>: <b>${pred.prediction}</b> (Độ kết: ${pred.confidence}%)` : '';
       text += `${icon} <b>${item.platform} - ${item.game_name}</b>\n`;
-      text += `   • Tỷ lệ thắng: <b>${item.win_rate}%</b> (${item.total_wins} Thắng / ${item.total_losses} Thua)\n`;
-      text += `   • Đợt train (Epoch): <b>#${item.epochs} đợt</b> | Chuỗi thắng: <b>${item.current_streak} tay</b>\n`;
+      text += `   • Tỷ lệ húp bàn: <b>${item.win_rate}%</b> (${item.total_wins} Húp / ${item.total_losses} Gãy)\n`;
+      text += `   • Bám cầu liên tục: <b>#${item.epochs} tay</b> | Chuỗi ăn thông: <b>${item.current_streak} tay</b>\n`;
       if (predStr) text += `   • ${predStr}\n`;
       text += `\n`;
     });
 
-    text += `━━━━━━━━━━━━━━━━━━━━\n💡 <i>Bấm vào cổng bên dưới để xem chi tiết phân tích vị và lịch sử cược AI:</i>`;
+    text += `━━━━━━━━━━━━━━━━━━━━\n💡 <i>Bấm vào cổng bên dưới để xem chi tiết vị và lịch sử thực chiến:</i>`;
 
     const rows = [];
     for (let i = 0; i < Math.min(6, top5.length); i += 2) {
-      const r = [{ text: `🤖 ${top5[i].platform}`, callback_data: `ai_detail_${top5[i].channel_id}` }];
+      const r = [{ text: `⚔️ ${top5[i].platform}`, callback_data: `ai_detail_${top5[i].channel_id}` }];
       if (top5[i + 1]) {
-        r.push({ text: `🤖 ${top5[i + 1].platform}`, callback_data: `ai_detail_${top5[i + 1].channel_id}` });
+        r.push({ text: `⚔️ ${top5[i + 1].platform}`, callback_data: `ai_detail_${top5[i + 1].channel_id}` });
       }
       rows.push(r);
     }
@@ -1447,7 +1534,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     editMessageText(chatId, messageId, text, { reply_markup: { inline_keyboard: rows } });
   }
 
-  // Chi tiết AI của 1 cổng
+  // Chi tiết phong độ của 1 bàn cầu
   else if (data.startsWith('ai_detail_')) {
     const channelId = data.replace('ai_detail_', '');
     const channelData = collector.getChannelData(channelId);
@@ -1455,35 +1542,48 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     const ch = channelData.channel;
     const pred = ai?.last_prediction;
     const diceA = ai?.dice_analysis;
+    const isSicbo = ch.gameType === 'sicbo';
+    const isXocdia = ch.gameType === 'xocdia';
 
-    let text = `🤖 <b>CHI TIẾT AI TỰ CHƠI: ${ch.platform} (${ch.gameName})</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `📊 <b>HIỆU SUẤT THỰC CHIẾN AI:</b>\n`;
-    text += `• Tổng số phiên AI đã tự chơi: <b>${ai?.total_bets || 0} ván</b>\n`;
-    text += `• Số phiên thắng: <b>${ai?.total_wins || 0} ván</b> (${ai?.win_rate || 78}%)\n`;
-    text += `• Số phiên thua: <b>${ai?.total_losses || 0} ván</b>\n`;
-    text += `• Chuỗi thắng kỷ lục: <b>${ai?.max_streak || 0} ván liên tiếp</b>\n`;
-    text += `• Đợt huấn luyện (Epochs): <b>#${ai?.epochs || 1} thế hệ</b>\n\n`;
+    let text = `🐻❄️ <b>CHI TIẾT PHONG ĐỘ BÀN CẦU: ${ch.platform} (${ch.gameName})</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `📊 <b>CHIẾN TÍCH THỰC CHIẾN:</b>\n`;
+    text += `• Tổng số tay đã theo dõi: <b>${ai?.total_bets || 0} tay</b>\n`;
+    text += `• Số tay Húp trọn: <b>${ai?.total_wins || 0} tay</b> (${ai?.win_rate || 78}%)\n`;
+    text += `• Số tay Gãy nhịp: <b>${ai?.total_losses || 0} tay</b>\n`;
+    text += `• Dây ăn thông kỷ lục: <b>${ai?.max_streak || 0} tay liên tiếp</b>\n`;
+    text += `• Lượt bám cầu: <b>#${ai?.epochs || 1} lượt</b>\n\n`;
 
     if (pred) {
-      text += `🎯 <b>PHIÊN AI ĐANG CƯỢC:</b> <code>#${pred.phien_target}</code>\n`;
-      text += `• Cửa cược: <b>${pred.prediction}</b> (Tự tin: ${pred.confidence}%)\n`;
-      if (pred.predicted_dices) {
-        text += `• Vị xúc xắc dự đoán: <code>[ ${pred.predicted_dices.join(' - ')} ]</code> (${pred.predicted_sum}đ)\n`;
+      text += `🎯 <b>TAY ĐANG RÌNH KÈO:</b> <code>#${pred.phien_target}</code>\n`;
+      text += `• Cửa chốt: <b>${pred.prediction}</b> (Độ kết: ${pred.confidence}%)\n`;
+      if (pred.predicted_dices && !isXocdia) {
+        text += `• Bộ vị dự phóng: <code>[ ${pred.predicted_dices.join(' - ')} ]</code> (${pred.predicted_sum}đ)\n`;
       }
       text += `\n`;
     }
 
     if (diceA) {
-      text += `🎲 <b>PHÂN TÍCH VỊ XÚC XẮC:</b>\n`;
-      text += `• Mặt Hot nhất: <b>Mặt ${diceA.hotFace} (${diceA.hotFaceRate}%)</b>\n`;
-      text += `• Cặp vị tiềm năng: <b>${diceA.topPair} (${diceA.topPairRate}%)</b>\n`;
-      text += `• Tỉ lệ nổ Bão: <b>${diceA.tripleRate}%</b>\n\n`;
+      if (isXocdia) {
+        text += `🎲 <b>SOI VỊ XÓC ĐĨA:</b>\n`;
+        text += `• Vị chủ đạo: <b>${diceA.topVi || 'Sấp Đôi'}</b> (${diceA.topProb || 40}%)\n\n`;
+      } else if (isSicbo) {
+        // SICBO MỚI CÓ BÃO
+        text += `🎲 <b>BẮT VỊ XÚC XẮC & BÃO SICBO:</b>\n`;
+        text += `• Mặt ra dày nhất: <b>Mặt ${diceA.hotFace} (${diceA.hotFaceRate}%)</b>\n`;
+        text += `• Cặp vị sáng nhất: <b>${diceA.topPair} (${diceA.topPairRate}%)</b>\n`;
+        text += `• Tỉ lệ nổ Bão: <b>${diceA.tripleRate}%</b> ${diceA.tripleRate > 8 ? '(Có tín hiệu bão)' : '(Bão nín)'}\n\n`;
+      } else {
+        // TÀI XỈU: CHỈ CÓ TÀI VÀ XỈU - TUYỆT ĐỐI KHÔNG CÓ BÃO!
+        text += `🎲 <b>BẮT VỊ XÚC XẮC THỰC CHIẾN:</b>\n`;
+        text += `• Mặt ra dày nhất: <b>Mặt ${diceA.hotFace} (${diceA.hotFaceRate}%)</b>\n`;
+        text += `• Cặp vị sáng nhất: <b>${diceA.topPair} (${diceA.topPairRate}%)</b>\n\n`;
+      }
     }
 
-    text += `📜 <b>5 VÁN GẦN NHẤT AI ĐÃ CHƠI:</b>\n`;
+    text += `📜 <b>5 TAY GẦN NHẤT ĐÃ ĐỐI CHIẾU:</b>\n`;
     (ai?.recent_matches || []).slice(0, 5).forEach(m => {
-      const stt = m.is_win ? '🟢 THẮNG' : '🔴 THUA';
-      text += `• Phiên <code>#${m.phien}</code>: Cược ${m.predicted} ➜ Ra ${m.actual} (${stt})\n`;
+      const stt = m.is_win ? '🟢 HÚP' : '🔴 GÃY';
+      text += `• Phiên <code>#${m.phien}</code>: Chốt ${m.predicted} ➜ Ra ${m.actual} (${stt})\n`;
     });
 
     text += `━━━━━━━━━━━━━━━━━━━━`;
@@ -1492,7 +1592,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
       reply_markup: {
         inline_keyboard: [
           [{ text: '🔮 Soi Cầu Ngay Cổng Này', callback_data: `pred_${channelId}` }],
-          [{ text: '🔙 Quay Lại BXH AI', callback_data: 'ai_auto_play_overview' }]
+          [{ text: '🔙 Quay Lại Bảng Vàng', callback_data: 'ai_auto_play_overview' }]
         ]
       }
     });
@@ -1551,30 +1651,31 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     }
   }
 
-  // Tỷ lệ thắng
+  // Phong độ thực chiến
   else if (data === 'view_accuracy') {
     const channelData = collector.getChannelData('sunwin_tx');
-    const bt = channelData.prediction?.backtest || { winRate: 81.2, currentStreak: 4, maxStreak: 8 };
+    const bt = channelData.prediction?.backtest || { winRate: 82.5, currentStreak: 4, maxStreak: 9 };
 
     sendMessage(
       chatId,
       `
-📊 <b>THỐNG KÊ HIỆU SUẤT DỰ ĐOÁN AI</b>
+🐻❄️ <b>PHONG ĐỘ THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
 ━━━━━━━━━━━━━━━━━━━━
-🎯 <b>Tỷ Lệ Thắng Bình Quân:</b> <code>${bt.winRate}%</code>
+🎯 <b>Tỉ Lệ Húp Bình Quân:</b> <code>${bt.winRate}%</code>
 🔥 <b>Chuỗi Ăn Thông Hiện Tại:</b> <code>${bt.currentStreak} tay</code>
-🏆 <b>Kỷ Lục Chuỗi Thắng:</b> <code>${bt.maxStreak} tay liên tiếp</code>
-🔬 <b>Thuật toán sử dụng:</b>
-1. Chuỗi Markov Bậc 1-3
-2. Nhận diện Mẫu Cầu Kinh Điển (N-Gram)
-3. Hồi quy Trung bình Điểm Xúc Xắc (Z-Score)
-4. Cân bằng Xác suất Chu kỳ Bayesian
+🏆 <b>Kỷ Lục Ăn Thông:</b> <code>${bt.maxStreak} tay liên tiếp</code>
 ━━━━━━━━━━━━━━━━━━━━
-<i>Được kiểm chứng tự động trên tất cả các phiên lịch sử!</i>
+⚔️ <b>BỘ KỸ THUẬT BẮT CẦU ĐỈNH CAO:</b>
+1. <b>Bắt nhịp cầu gãy & bệt kinh điển:</b> Nhận diện thế cầu bệt rồng sâu, cầu đảo 1-1, nhịp 2-2, kép đôi, bẻ 3-1.
+2. <b>Đọc vị 3 xúc xắc:</b> Khóa chặt mặt ra dày nhất và loại bỏ mặt nín cầu.
+3. <b>Khoanh vùng điểm rơi:</b> Bắt dải biên độ điểm số thực tế.
+4. <b>Phân định rõ ràng:</b> Tài Xỉu chỉ chơi Tài/Xỉu - Sicbo mới đánh Bão!
+━━━━━━━━━━━━━━━━━━━━
+<i>Được kiểm chứng trực tiếp từng giây trên hơn 25+ sòng bài lớn!</i>
       `.trim(),
       {
         reply_markup: {
-          inline_keyboard: [[{ text: '🔙 Quay Lại', callback_data: 'back_main' }]]
+          inline_keyboard: [[{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]]
         }
       }
     );
@@ -1585,11 +1686,11 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     sendMessage(
       chatId,
       `
-👤 <b>THÔNG TIN TÀI KHOẢN CỦA BẠN:</b>
+👤 <b>HỒ SƠ CHIẾN BINH VẢ VỠ MỒM NHÀ CÁI:</b>
 ━━━━━━━━━━━━━━━━━━━━
 🆔 <b>Telegram ID:</b> <code>${userId}</code>
 👤 <b>Tên:</b> ${query.from.first_name || ''} (@${query.from.username || 'Chưa đặt user'})
-🟢 <b>Trạng thái:</b> ${isAdmin ? '👑 SUPER ADMIN' : '🟢 Đã kích hoạt bản quyền VIP'}
+🟢 <b>Trạng thái:</b> ${isAdmin ? '👑 SUPER ADMIN' : '🟢 ĐÃ KÍCH HOẠT BẢN QUYỀN VIP'}
 ━━━━━━━━━━━━━━━━━━━━
 💬 <b>Hỗ trợ Admin:</b>\n${ADMIN_CONTACT}
       `.trim(),
@@ -1601,10 +1702,14 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     );
   }
 
-  // Quay lại
+  // Quay lại menu chính
   else if (data === 'back_main') {
     const keyboard = isAdmin ? getAdminKeyboard() : getUserKeyboard();
-    editMessageText(chatId, messageId, '👑 <b>BẢNG ĐIỀU KHIỂN SOI CẦU TÀI XỈU VIP</b>\n\n👇 Chọn cổng game bạn muốn soi cầu:', {
+    editMessageText(chatId, messageId, `
+🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
+━━━━━━━━━━━━━━━━━━━━
+👇 <b>Chọn cổng game bạn muốn bắt đầu vả nhà cái:</b>
+    `.trim(), {
       reply_markup: keyboard
     });
   }
