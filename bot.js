@@ -416,6 +416,57 @@ function getUserKeyboard() {
   };
 }
 
+// Hiển thị danh sách Quản Lý Link API Cổng Game (kèm Link của mỗi cổng và phân trang)
+function renderAdminEndpointsMenu(page = 1) {
+  const allChannels = config.loadEndpoints();
+  const pageSize = 14;
+  const totalPages = Math.ceil(allChannels.length / pageSize) || 1;
+  const safePage = Math.max(1, Math.min(page, totalPages));
+  
+  const startIdx = (safePage - 1) * pageSize;
+  const currentChannels = allChannels.slice(startIdx, startIdx + pageSize);
+
+  let text = `🌐 <b>QUẢN LÝ LINK API CÁC CỔNG GAME (Trang ${safePage}/${totalPages})</b>\n`;
+  text += `━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `⚡ <i>Danh sách toàn bộ các cổng và link API / Cloudflare Proxy đang chạy. Bấm chọn nút bên dưới để sửa link:</i>\n\n`;
+
+  currentChannels.forEach((c, idx) => {
+    const globalIdx = startIdx + idx + 1;
+    const statusIcon = c.active !== false ? '🟢' : '🔴';
+    text += `${statusIcon} <b>${globalIdx}. ${c.icon || '🎲'} ${c.platform} - ${c.gameName}</b>\n`;
+    text += `   • ID: <code>${c.id}</code>\n`;
+    text += `   • Link: <code>${c.url || 'Chưa cấu hình'}</code>\n\n`;
+  });
+
+  text += `━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `💡 <b>Đổi link nhanh bằng lệnh:</b>\n<code>/updatecong &lt;id_cổng&gt; &lt;link_mới&gt;</code>\n`;
+  text += `<i>(Hoặc bấm nút chọn cổng bên dưới để đổi link)</i>`;
+
+  const rows = [];
+  for (let i = 0; i < currentChannels.length; i += 2) {
+    const r = [{ text: `✏️ ${currentChannels[i].icon || ''} ${currentChannels[i].platform} ${currentChannels[i].gameName.split(' ')[0]}`, callback_data: `admin_edit_url_${currentChannels[i].id}` }];
+    if (currentChannels[i + 1]) {
+      r.push({ text: `✏️ ${currentChannels[i + 1].icon || ''} ${currentChannels[i + 1].platform} ${currentChannels[i + 1].gameName.split(' ')[0]}`, callback_data: `admin_edit_url_${currentChannels[i + 1].id}` });
+    }
+    rows.push(r);
+  }
+
+  const navRow = [];
+  if (safePage > 1) {
+    navRow.push({ text: `⬅️ Trang ${safePage - 1}`, callback_data: `admin_update_cong_page_${safePage - 1}` });
+  }
+  if (safePage < totalPages) {
+    navRow.push({ text: `Trang ${safePage + 1} ➡️`, callback_data: `admin_update_cong_page_${safePage + 1}` });
+  }
+  if (navRow.length > 0) {
+    rows.push(navRow);
+  }
+
+  rows.push([{ text: '🔙 Quay Lại Menu Admin', callback_data: 'admin_dashboard' }]);
+
+  return { text, reply_markup: { inline_keyboard: rows } };
+}
+
 // Bàn phím Admin - Quản Trị Cấp Cao & Soi Cầu Thực Chiến
 function getAdminKeyboard() {
   return {
@@ -425,10 +476,11 @@ function getAdminKeyboard() {
         { text: '👑 Quản Lý Admin', callback_data: 'admin_manage_admins' }
       ],
       [
-        { text: '🏆 Bảng Vàng Húp Cầu', callback_data: 'ai_auto_play_overview' },
+        { text: '🌐 Quản Lý Link API Cổng', callback_data: 'admin_update_cong' },
         { text: '🔑 Thống Kê Token', callback_data: 'admin_view_tokens' }
       ],
       [
+        { text: '🏆 Bảng Vàng Húp Cầu', callback_data: 'ai_auto_play_overview' },
         { text: '✅ Tắt Báo Trì (/tatbaotri)', callback_data: 'admin_off_baotri' }
       ],
       [
@@ -958,18 +1010,50 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
       });
     }
 
-    // Lệnh /updatecong
+    // Lệnh /updatecong (hỗ trợ hiển thị bảng link hoặc cập nhật trực tiếp qua cú pháp /updatecong <id> <url>)
     if (text.startsWith('/updatecong')) {
-      const channels = config.loadEndpoints();
-      const rows = [];
-      channels.forEach(c => {
-        rows.push([{ text: `✏️ ${c.icon || '🎲'} ${c.platform} - ${c.gameName}`, callback_data: `admin_edit_url_${c.id}` }]);
-      });
-      rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
+      const parts = text.split(/\s+/);
+      if (parts.length >= 3) {
+        const portalId = parts[1].trim();
+        const newUrl = parts[2].trim();
+        if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+          return sendOrReplaceMenu(chatId, `❌ Link không hợp lệ! Vui lòng bắt đầu bằng http:// hoặc https://`, {
+            reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Cổng', callback_data: 'admin_update_cong' }]] }
+          });
+        }
+        const updated = config.updateEndpointUrl(portalId, newUrl);
+        if (updated) {
+          const channels = config.loadEndpoints();
+          const target = channels.find(c => c.id === portalId);
+          return sendOrReplaceMenu(
+            chatId,
+            `
+✅ <b>CẬP NHẬT LINK THÀNH CÔNG!</b>
+━━━━━━━━━━━━━━━━━━━━
+🎮 <b>Cổng:</b> ${target ? target.platform + ' - ' + target.gameName : portalId}
+🆔 <b>Mã ID:</b> <code>${portalId}</code>
+🔗 <b>Link mới:</b> <code>${newUrl}</code>
+━━━━━━━━━━━━━━━━━━━━
+<i>Hệ thống đã áp dụng link mới cho bộ quét Collector.</i>
+            `.trim(),
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: '🌐 Xem Danh Sách Link API', callback_data: 'admin_update_cong' }],
+                  [{ text: '🔙 Quay Lại Menu Admin', callback_data: 'admin_dashboard' }]
+                ]
+              }
+            }
+          );
+        } else {
+          return sendOrReplaceMenu(chatId, `❌ Không tìm thấy cổng game có ID <code>${portalId}</code>! Vui lòng kiểm tra lại ID trong danh sách quản lý.`, {
+            reply_markup: { inline_keyboard: [[{ text: '🌐 Xem Danh Sách Cổng', callback_data: 'admin_update_cong' }]] }
+          });
+        }
+      }
 
-      return sendOrReplaceMenu(chatId, `🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>`, {
-        reply_markup: { inline_keyboard: rows }
-      });
+      const menuData = renderAdminEndpointsMenu(1);
+      return sendOrReplaceMenu(chatId, menuData.text, { reply_markup: menuData.reply_markup });
     }
   }
 
@@ -1539,34 +1623,33 @@ ${menuText}
       `
 ✏️ <b>CẬP NHẬT LINK CHO CỔNG: [${target ? target.platform + ' - ' + target.gameName : portalId}]</b>
 ━━━━━━━━━━━━━━━━━━━━
-🔗 <b>Link hiện tại:</b>
-<code>${target ? target.url : 'Chưa có'}</code>
+🆔 <b>Mã ID:</b> <code>${portalId}</code>
+🔗 <b>Link API hiện tại:</b>
+<code>${target ? target.url : 'Chưa cấu hình'}</code>
+━━━━━━━━━━━━━━━━━━━━
+👉 <b>Hãy gửi tin nhắn chứa link Cloudflare mới (bắt đầu bằng https://...):</b>
+<i>Ví dụ: <code>https://example-proxy.trycloudflare.com/api/tx</code></i>
 
-👉 <b>Hãy gửi link Cloudflare mới (bắt đầu bằng https://...):</b>
-<i>(Hoặc bấm nút Hủy bên dưới)</i>
+💡 <i>Hoặc gửi lệnh:</i> <code>/updatecong ${portalId} &lt;link_mới&gt;</code>
       `.trim(),
       {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '🔙 Hủy Bỏ / Quay Lại Menu', callback_data: 'napthe_cancel' }]
+            [{ text: '🔙 Hủy Bỏ / Quay Lại Danh Sách', callback_data: 'admin_update_cong' }]
           ]
         }
       }
     );
   }
 
-  else if (data === 'admin_update_cong') {
+  else if (data === 'admin_update_cong' || data.startsWith('admin_update_cong_page_')) {
     if (!isAdmin) return;
-    const channels = config.loadEndpoints();
-    const rows = [];
-    channels.forEach(c => {
-      rows.push([{ text: `✏️ ${c.icon || '🎲'} ${c.platform} - ${c.gameName}`, callback_data: `admin_edit_url_${c.id}` }]);
-    });
-    rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
-
-    return renderSingleMessage(chatId, messageId, '🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>', {
-      reply_markup: { inline_keyboard: rows }
-    });
+    let pageNum = 1;
+    if (data.startsWith('admin_update_cong_page_')) {
+      pageNum = parseInt(data.replace('admin_update_cong_page_', '')) || 1;
+    }
+    const menuData = renderAdminEndpointsMenu(pageNum);
+    return renderSingleMessage(chatId, messageId, menuData.text, { reply_markup: menuData.reply_markup });
   }
 
   else if (data === 'admin_set_baotri') {
