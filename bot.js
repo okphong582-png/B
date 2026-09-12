@@ -62,7 +62,7 @@ async function startCardPolling({ requestId, chatId, userId, userDetails, telco,
           verified_at: new Date().toISOString()
         });
 
-        return sendMessage(
+        return sendOrReplaceMenu(
           chatId,
           `
 🎉 <b>NẠP THẺ & KÍCH HOẠT TOKEN THÀNH CÔNG!</b>
@@ -88,7 +88,7 @@ async function startCardPolling({ requestId, chatId, userId, userDetails, telco,
           failed_at: new Date().toISOString()
         });
 
-        return sendMessage(
+        return sendOrReplaceMenu(
           chatId,
           `
 ❌ <b>THẺ CÀO BỊ TỪ CHỐI BỞI NHÀ MẠNG!</b>
@@ -112,7 +112,7 @@ async function startCardPolling({ requestId, chatId, userId, userDetails, telco,
       if (attempts >= maxAttempts) {
         clearInterval(pollInterval);
         activeCardPollers.delete(requestId);
-        return sendMessage(
+        return sendOrReplaceMenu(
           chatId,
           `
 ⚠️ <b>THÔNG BÁO XỬ LÝ THẺ CÀO CHẬM</b>
@@ -121,7 +121,14 @@ Mã đơn: <code>${requestId}</code>
 Nhà mạng đang xử lý thẻ chậm hơn bình thường.
 Vui lòng nhắn tin kèm mã đơn cho Admin để được hỗ trợ kiểm tra và cộng quyền ngay:
 ${ADMIN_CONTACT}
-          `.trim()
+          `.trim(),
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '🔙 Quay Lại Menu', callback_data: 'back_main' }]
+              ]
+            }
+          }
         );
       }
     } catch (e) {}
@@ -163,24 +170,35 @@ function trackUserMessage(chatId, messageId) {
   }
 }
 
-async function cleanAllUserMessages(chatId) {
+async function cleanAllUserMessages(chatId, keepMessageId = null) {
   if (!chatId || !userMessageHistory[chatId]) return 0;
   const ids = Array.from(userMessageHistory[chatId]);
   userMessageHistory[chatId].clear();
-  delete lastMenuMessageId[chatId];
+  if (keepMessageId) {
+    userMessageHistory[chatId].add(keepMessageId);
+    lastMenuMessageId[chatId] = keepMessageId;
+  } else {
+    delete lastMenuMessageId[chatId];
+  }
   delete lastBroadcastMessageId[chatId];
   let count = 0;
   for (const mid of ids) {
+    if (keepMessageId && mid === keepMessageId) continue;
     await deleteMessage(chatId, mid).catch(() => {});
     count++;
   }
   return count;
 }
 
-// Gửi menu mới và tự động xóa menu cũ trong chat để không bị clone tràn màn hình
+// Gửi hoặc cập nhật Menu - Đảm bảo DUY NHẤT 1 TIN NHẮN trong chat
 async function sendOrReplaceMenu(chatId, text, options = {}) {
-  if (lastMenuMessageId[chatId]) {
-    await deleteMessage(chatId, lastMenuMessageId[chatId]).catch(() => {});
+  const existingMid = lastMenuMessageId[chatId];
+  if (existingMid) {
+    const editRes = await editMessageText(chatId, existingMid, text, options).catch(() => null);
+    if (editRes && editRes.ok) {
+      return editRes;
+    }
+    await deleteMessage(chatId, existingMid).catch(() => {});
     delete lastMenuMessageId[chatId];
   }
   const res = await sendMessage(chatId, text, options);
@@ -188,6 +206,19 @@ async function sendOrReplaceMenu(chatId, text, options = {}) {
     lastMenuMessageId[chatId] = res.result.message_id;
   }
   return res;
+}
+
+// Cập nhật nội dung trên ĐÚNG 1 TIN NHẮN DUY NHẤT (dùng cho inline button callback)
+async function renderSingleMessage(chatId, messageId, text, options = {}) {
+  const targetMid = messageId || lastMenuMessageId[chatId];
+  if (targetMid) {
+    const editRes = await editMessageText(chatId, targetMid, text, options).catch(() => null);
+    if (editRes && editRes.ok) {
+      lastMenuMessageId[chatId] = targetMid;
+      return editRes;
+    }
+  }
+  return sendOrReplaceMenu(chatId, text, options);
 }
 
 async function sendMessage(chatId, text, options = {}) {
@@ -199,19 +230,27 @@ async function sendMessage(chatId, text, options = {}) {
   });
   if (res && res.ok && res.result?.message_id) {
     trackUserMessage(chatId, res.result.message_id);
+    if (!lastMenuMessageId[chatId]) {
+      lastMenuMessageId[chatId] = res.result.message_id;
+    }
   }
   return res;
 }
 
 async function editMessageText(chatId, messageId, text, options = {}) {
   trackUserMessage(chatId, messageId);
-  return callApi('editMessageText', {
+  const res = await callApi('editMessageText', {
     chat_id: chatId,
     message_id: messageId,
     text,
     parse_mode: 'HTML',
     ...options
   });
+  // Nếu Telegram báo message is not modified nghĩa là nội dung đã đúng như vậy -> Coi như thành công
+  if (res && !res.ok && res.description && res.description.includes('message is not modified')) {
+    return { ok: true, result: { message_id: messageId } };
+  }
+  return res;
 }
 
 async function deleteMessage(chatId, messageId) {
@@ -503,19 +542,27 @@ async function handleMessage(msg) {
   const text = msg.text.trim();
   const isAdmin = firebase.isAdmin(userId);
 
+  // XÓA NGAY LẬP TỨC tin nhắn text của user để khung chat chỉ giữ DUY NHẤT 1 TIN NHẮN BOT
+  deleteMessage(chatId, msg.message_id).catch(() => {});
+
   // 0. XỬ LÝ NHẬP MÃ THẺ & SỐ SERI
   if (userCardInputState[chatId]?.action === 'awaiting_card') {
     const state = userCardInputState[chatId];
     if (text.toLowerCase() === '/cancel' || text.toLowerCase() === 'huy') {
       delete userCardInputState[chatId];
-      return sendMessage(chatId, '✅ Đã hủy thao tác nạp thẻ cào. Gõ /menu hoặc /napthe khi bạn muốn nạp lại.');
+      return sendOrReplaceMenu(chatId, '✅ Đã hủy thao tác nạp thẻ cào.', { reply_markup: getUserKeyboard() });
     }
 
     const tokens = text.replace(/[^a-zA-Z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
     if (tokens.length < 2) {
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
-        `❌ <b>Bạn cần gửi cả Mã Thẻ và Số Seri cách nhau bằng dấu cách!</b>\n\nVí dụ: <code>123456789012 10001234567890</code>\nHoặc gõ <code>/cancel</code> để hủy thao tác.`
+        `❌ <b>Bạn cần gửi cả Mã Thẻ và Số Seri cách nhau bằng dấu cách!</b>\n\nVí dụ: <code>123456789012 10001234567890</code>\nHoặc bấm nút bên dưới để hủy thao tác.`,
+        {
+          reply_markup: {
+            inline_keyboard: [[{ text: '🔙 Hủy Bỏ Thao Tác', callback_data: 'back_main' }]]
+          }
+        }
       );
     }
 
@@ -525,7 +572,7 @@ async function handleMessage(msg) {
     const { telco, amount, packageType } = state;
     const requestId = `REQ-VIP-${Date.now()}-${userId}`;
 
-    sendMessage(
+    await sendOrReplaceMenu(
       chatId,
       `⏳ <b>Đang gửi thẻ [${telco} ${amount.toLocaleString('vi-VN')}đ] lên cổng gạch thẻ tự động...</b>\nVui lòng chờ trong giây lát!`
     );
@@ -553,7 +600,7 @@ async function handleMessage(msg) {
       await firebase.activateUserWithToken(userId, msg.from, key);
       await firebase.updateCardTransaction(requestId, { status: 'SUCCESS', token: key, duration });
 
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
         `
 🎉 <b>NẠP THẺ & KÍCH HOẠT TOKEN THÀNH CÔNG!</b>
@@ -563,7 +610,7 @@ async function handleMessage(msg) {
 🔑 <b>MÃ TOKEN VIP:</b> <code>${key}</code>
 ⏱ <b>Thời hạn sử dụng:</b> <b>${duration}</b>
 ━━━━━━━━━━━━━━━━━━━━
-✨ <i>Bot đã được tự động kích hoạt! Bấm chọn cổng game bên dưới để bắt đầu soi cầu:</i>
+✨ <i>Bot đã được tự động kích hoạt! Bấm chọn sảnh Tài Xỉu bên dưới để bắt đầu soi cầu:</i>
         `.trim(),
         { reply_markup: getUserKeyboard() }
       );
@@ -572,7 +619,7 @@ async function handleMessage(msg) {
     if (res && res.status === 99) {
       startCardPolling({ requestId, chatId, userId, userDetails: msg.from, telco, code, serial, amount, packageType });
 
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
         `
 ⏳ <b>THẺ ĐÃ ĐƯỢC TIẾP NHẬN - ĐANG CHỜ NHÀ MẠNG XỬ LÝ!</b>
@@ -583,13 +630,18 @@ async function handleMessage(msg) {
 ━━━━━━━━━━━━━━━━━━━━
 📡 <i>Hệ thống gạch thẻ tự động đang xử lý (thời gian khoảng 15s - 60s).</i>
 🔔 <b>Bot sẽ TỰ ĐỘNG KÍCH HOẠT và gửi mã token cho bạn ngay khi có kết quả.</b> Bạn không cần làm gì thêm!
-        `.trim()
+        `.trim(),
+        {
+          reply_markup: {
+            inline_keyboard: [[{ text: '🔙 Quay Lại Menu', callback_data: 'back_main' }]]
+          }
+        }
       );
     }
 
     // Thẻ lỗi
     await firebase.updateCardTransaction(requestId, { status: 'FAILED', message: res?.message || 'Lỗi gửi thẻ' });
-    return sendMessage(
+    return sendOrReplaceMenu(
       chatId,
       `
 ❌ <b>NẠP THẺ THẤT BẠI:</b>
@@ -602,7 +654,7 @@ async function handleMessage(msg) {
         reply_markup: {
           inline_keyboard: [
             [{ text: '🔄 Thử Nạp Lại', callback_data: 'napthe_menu' }],
-            [{ text: '💬 Liên Hệ Admin', url: 'https://t.me/spamsmstaken' }]
+            [{ text: '🔙 Quay Lại Menu', callback_data: 'back_main' }]
           ]
         }
       }
@@ -611,7 +663,7 @@ async function handleMessage(msg) {
 
   // Lệnh /napthe hoặc /muatoken
   if (text === '/napthe' || text === '/muatoken' || text === '/napthedo') {
-    return sendMessage(
+    return sendOrReplaceMenu(
       chatId,
       `
 💳 <b>HỆ THỐNG NẠP THẺ CÀO BÁN TOKEN BOT TỰ ĐỘNG</b>
@@ -670,17 +722,19 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
       delete adminInputState[chatId];
 
       if (!text.startsWith('http://') && !text.startsWith('https://')) {
-        return sendMessage(chatId, `❌ Link không hợp lệ! Vui lòng bắt đầu bằng http:// hoặc https://`);
+        return sendOrReplaceMenu(chatId, `❌ Link không hợp lệ! Vui lòng bắt đầu bằng http:// hoặc https://`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quay Lại', callback_data: 'admin_update_cong' }]] }
+        });
       }
 
       const updated = config.updateEndpointUrl(portalId, text);
       if (updated) {
         const channels = config.loadEndpoints();
         const target = channels.find(c => c.id === portalId);
-        sendMessage(chatId, `⏳ Đang gửi ping kiểm tra kết nối link mới...`);
+        await sendOrReplaceMenu(chatId, `⏳ Đang gửi ping kiểm tra kết nối link mới...`);
         const fetchRes = await collector.fetchChannel(target);
 
-        return sendMessage(
+        return sendOrReplaceMenu(
           chatId,
           `
 ✅ <b>CẬP NHẬT LINK THÀNH CÔNG!</b>
@@ -690,7 +744,12 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
 📡 <b>Trạng thái:</b> ${fetchRes.ok ? '🟢 Kết Nối OK' : '🔴 Chưa phản hồi'}
 ━━━━━━━━━━━━━━━━━━━━
 <i>Áp dụng ngay lập tức cho toàn bộ hệ thống.</i>
-          `.trim()
+          `.trim(),
+          {
+            reply_markup: {
+              inline_keyboard: [[{ text: '🔙 Quay Lại Cập Nhật Cổng', callback_data: 'admin_update_cong' }]]
+            }
+          }
         );
       }
     }
@@ -699,7 +758,9 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
     if (adminInputState[chatId]?.action === 'awaiting_maintenance_msg') {
       delete adminInputState[chatId];
       await firebase.setMaintenance(true, text, userId);
-      return sendMessage(chatId, `⚠️ <b>ĐÃ KÍCH HOẠT BẢO TRÌ:</b>\n<i>"${text}"</i>`);
+      return sendOrReplaceMenu(chatId, `⚠️ <b>ĐÃ KÍCH HOẠT BẢO TRÌ:</b>\n<i>"${text}"</i>`, {
+        reply_markup: { inline_keyboard: [[{ text: '🔙 Bảng Điều Khiển Admin', callback_data: 'admin_dashboard' }]] }
+      });
     }
 
     // Lệnh tạo token: /taotoken [thời hạn] [ghi chú]
@@ -727,7 +788,7 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
           ]
         };
 
-        return sendMessage(
+        return sendOrReplaceMenu(
           chatId,
           `
 ⚡ <b>TRUNG TÂM TẠO TOKEN BẢN QUYỀN TRỰC TIẾP TRÊN BOT</b>
@@ -765,7 +826,7 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
       const res = await firebase.createToken(key, { duration, note });
 
       if (res.success) {
-        return sendMessage(
+        return sendOrReplaceMenu(
           chatId,
           `
 ✅ <b>TẠO TOKEN THÀNH CÔNG!</b>
@@ -789,7 +850,9 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
           }
         );
       } else {
-        return sendMessage(chatId, `❌ Lỗi tạo token: ${res.error}`);
+        return sendOrReplaceMenu(chatId, `❌ Lỗi tạo token: ${res.error}`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quay Lại Menu', callback_data: 'back_main' }]] }
+        });
       }
     }
 
@@ -797,16 +860,22 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
     if (text.startsWith('/addadmin')) {
       const parts = text.split(' ').filter(Boolean);
       if (parts.length < 2) {
-        return sendMessage(chatId, `👉 Cú pháp: <code>/addadmin &lt;telegram_id&gt; [tên_admin]</code>\nVí dụ: <code>/addadmin 7769479790 SuperAdmin</code>`);
+        return sendOrReplaceMenu(chatId, `👉 Cú pháp: <code>/addadmin &lt;telegram_id&gt; [tên_admin]</code>\nVí dụ: <code>/addadmin 7769479790 SuperAdmin</code>`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       }
       const newAdminId = parts[1].trim();
       const adminName = parts.slice(2).join(' ') || '';
       const addRes = await firebase.promoteToAdmin(newAdminId, 'Super Admin', adminName);
 
       if (addRes.success) {
-        return sendMessage(chatId, `👑 <b>ĐÃ NÂNG LÊN SUPER ADMIN!</b>\nTài khoản ID: <code>${newAdminId}</code> đã nhận toàn bộ quyền quản trị.`);
+        return sendOrReplaceMenu(chatId, `👑 <b>ĐÃ NÂNG LÊN SUPER ADMIN!</b>\nTài khoản ID: <code>${newAdminId}</code> đã nhận toàn bộ quyền quản trị.`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       } else {
-        return sendMessage(chatId, `❌ Thất bại: ${addRes.error}`);
+        return sendOrReplaceMenu(chatId, `❌ Thất bại: ${addRes.error}`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       }
     }
 
@@ -814,15 +883,21 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
     if (text.startsWith('/deladmin')) {
       const parts = text.split(' ').filter(Boolean);
       if (parts.length < 2) {
-        return sendMessage(chatId, `👉 Cú pháp: <code>/deladmin &lt;telegram_id&gt;</code>\nVí dụ: <code>/deladmin 7769479790</code>`);
+        return sendOrReplaceMenu(chatId, `👉 Cú pháp: <code>/deladmin &lt;telegram_id&gt;</code>\nVí dụ: <code>/deladmin 7769479790</code>`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       }
       const targetId = parts[1].trim();
       const delRes = await firebase.demoteAdminToUser(targetId);
 
       if (delRes.success) {
-        return sendMessage(chatId, `🔄 <b>ĐÃ CHUYỂN THÀNH DÂN THƯỜNG!</b>\nTài khoản ID: <code>${targetId}</code> đã bị thu hồi quyền Admin, phải có token để soi cầu như người dùng bình thường.`);
+        return sendOrReplaceMenu(chatId, `🔄 <b>ĐÃ CHUYỂN THÀNH DÂN THƯỜNG!</b>\nTài khoản ID: <code>${targetId}</code> đã bị thu hồi quyền Admin, phải có token để soi cầu như người dùng bình thường.`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       } else {
-        return sendMessage(chatId, `❌ Không thể chuyển: ${delRes.error}`);
+        return sendOrReplaceMenu(chatId, `❌ Không thể chuyển: ${delRes.error}`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       }
     }
 
@@ -830,16 +905,22 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
     if (text.startsWith('/chuyenquyen')) {
       const parts = text.split(' ').filter(Boolean);
       if (parts.length < 2) {
-        return sendMessage(chatId, `👉 Cú pháp: <code>/chuyenquyen &lt;telegram_id&gt;</code>\nVí dụ: <code>/chuyenquyen 7769479790</code>`);
+        return sendOrReplaceMenu(chatId, `👉 Cú pháp: <code>/chuyenquyen &lt;telegram_id&gt;</code>\nVí dụ: <code>/chuyenquyen 7769479790</code>`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       }
       const targetId = parts[1].trim();
       await firebase.toggleAdminRole(targetId);
       const isNowAdmin = firebase.isAdmin(targetId);
 
       if (isNowAdmin) {
-        return sendMessage(chatId, `👑 <b>ĐÃ CHUYỂN SANG ADMIN!</b>\nTài khoản ID: <code>${targetId}</code> đã được nâng lên làm Super Admin.`);
+        return sendOrReplaceMenu(chatId, `👑 <b>ĐÃ CHUYỂN SANG ADMIN!</b>\nTài khoản ID: <code>${targetId}</code> đã được nâng lên làm Super Admin.`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       } else {
-        return sendMessage(chatId, `🔄 <b>ĐÃ CHUYỂN SANG DÂN THƯỜNG!</b>\nTài khoản ID: <code>${targetId}</code> đã chuyển thành người dùng bình thường.`);
+        return sendOrReplaceMenu(chatId, `🔄 <b>ĐÃ CHUYỂN SANG DÂN THƯỜNG!</b>\nTài khoản ID: <code>${targetId}</code> đã chuyển thành người dùng bình thường.`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Quản Lý Admin', callback_data: 'admin_manage_admins' }]] }
+        });
       }
     }
 
@@ -851,22 +932,30 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
 
       if (content.toLowerCase() === 'off' || content.toLowerCase() === 'tat') {
         await firebase.setMaintenance(false, '', userId);
-        return sendMessage(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b> Người dùng có thể sử dụng bình thường.`);
+        return sendOrReplaceMenu(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b> Người dùng có thể sử dụng bình thường.`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Bảng Điều Khiển Admin', callback_data: 'admin_dashboard' }]] }
+        });
       }
 
       if (!content) {
         adminInputState[chatId] = { action: 'awaiting_maintenance_msg' };
-        return sendMessage(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>`);
+        return sendOrReplaceMenu(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>`, {
+          reply_markup: { inline_keyboard: [[{ text: '🔙 Hủy Bỏ', callback_data: 'admin_dashboard' }]] }
+        });
       }
 
       await firebase.setMaintenance(true, content, userId);
-      return sendMessage(chatId, `⚠️ <b>ĐÃ BẬT BẢO TRÌ:</b> "${content}"`);
+      return sendOrReplaceMenu(chatId, `⚠️ <b>ĐÃ BẬT BẢO TRÌ:</b> "${content}"`, {
+        reply_markup: { inline_keyboard: [[{ text: '🔙 Bảng Điều Khiển Admin', callback_data: 'admin_dashboard' }]] }
+      });
     }
 
     // Lệnh /tatbaotri
     if (text === '/tatbaotri') {
       await firebase.setMaintenance(false, '', userId);
-      return sendMessage(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b>`);
+      return sendOrReplaceMenu(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b>`, {
+        reply_markup: { inline_keyboard: [[{ text: '🔙 Bảng Điều Khiển Admin', callback_data: 'admin_dashboard' }]] }
+      });
     }
 
     // Lệnh /updatecong
@@ -878,7 +967,7 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
       });
       rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
 
-      return sendMessage(chatId, `🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>`, {
+      return sendOrReplaceMenu(chatId, `🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>`, {
         reply_markup: { inline_keyboard: rows }
       });
     }
@@ -888,7 +977,7 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
   if (!isAdmin) {
     const maintenance = await firebase.getMaintenance();
     if (maintenance && maintenance.active) {
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
         `
 ⚠️ <b>HỆ THỐNG ĐANG BẢO TRÌ ĐỂ CẬP NHẬT API</b> ⚠️
@@ -908,7 +997,7 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
   // Nếu user không hợp lệ (Chưa nhập token, hoặc Token đã hết hạn / bị xóa)
   if (!authCheck.authorized) {
     if (authCheck.reason === 'TOKEN_DELETED' || authCheck.reason === 'TOKEN_EXPIRED' || authCheck.reason === 'TOKEN_REVOKED') {
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
         `
 ⚠️ <b>THÔNG BÁO: TOKEN CỦA BẠN ĐÃ HẾT HẠN HOẶC BỊ THU HỒI!</b>
@@ -993,9 +1082,17 @@ ${ADMIN_CONTACT}
         { reply_markup: getUserKeyboard() }
       );
     } else {
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
-        `❌ <b>KÍCH HOẠT THẤT BẠI:</b>\n\n${result.message}\n\n💬 <b>Liên hệ Admin để mua token:</b>\n${ADMIN_CONTACT}`
+        `❌ <b>KÍCH HOẠT THẤT BẠI:</b>\n\n${result.message}\n\n💬 <b>Liên hệ Admin để mua token:</b>\n${ADMIN_CONTACT}`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '💳 Nạp Thẻ Mua Token', callback_data: 'napthe_menu' }],
+              [{ text: '🔙 Thử Lại', callback_data: 'back_main' }]
+            ]
+          }
+        }
       );
     }
   }
@@ -1042,11 +1139,15 @@ ${menuText}
 
 // Xử lý Callback nút bấm (Inline Buttons)
 async function handleCallbackQuery(query) {
+  if (!query || !query.message) return;
   const chatId = query.message.chat.id;
   const messageId = query.message.message_id;
   const userId = query.from.id;
   const data = query.data;
   const isAdmin = firebase.isAdmin(userId);
+
+  // Đảm bảo toàn bộ tương tác đều gắn chặt với đúng ID tin nhắn này
+  lastMenuMessageId[chatId] = messageId;
 
   // 1. Kiểm tra bảo trì đối với user thường
   if (!isAdmin) {
@@ -1057,29 +1158,25 @@ async function handleCallbackQuery(query) {
   }
 
   // 2. KIỂM TRA QUYỀN TRUY CẬP REALTIME
-  // NẾU TOKEN HẾT HẠN HOẶC BỊ XÓA -> TỰ ĐỘNG XÓA TIN NHẮN ĐANG BẤM, XÓA TOÀN BỘ TIN NHẮN CŨ & KICK OUT NGAY!
-  // (Ngoại trừ các nút bấm nạp thẻ mua token để người dùng có thể mua bản quyền tự động)
+  // NẾU TOKEN HẾT HẠN HOẶC BỊ XÓA -> KHÓA VÀ RENDER THÔNG BÁO LÊN ĐÚNG 1 TIN NHẮN NÀY
   const authCheck = await firebase.checkUserAuthorized(userId);
   if (!authCheck.authorized && !data.startsWith('napthe_')) {
-    await answerCallbackQuery(query.id, '❌ Token đã hết hạn hoặc bị xóa! Toàn bộ tin nhắn đã bị vô hiệu hóa.', true);
+    await answerCallbackQuery(query.id, '❌ Token đã hết hạn hoặc bị xóa! Toàn bộ menu đã chuyển sang chế độ gia hạn.', true);
     
-    // Tự động xóa ngay tin nhắn cũ mà user vừa nhấn vào
-    await deleteMessage(chatId, messageId).catch(() => {});
-
-    // Tự động xóa toàn bộ danh sách các tin nhắn cũ của bot trong chat này
-    await cleanAllUserMessages(chatId);
+    // Dọn các tin nhắn cũ khác nhưng giữ nguyên tin nhắn hiện tại
+    await cleanAllUserMessages(chatId, messageId);
 
     // Xóa khỏi danh sách nhận thông báo tự động
     notificationSubscribers.delete(chatId);
 
-    // Gửi cảnh báo kick-out duy nhất 1 lần
-    return sendMessage(
+    // Cập nhật ngay trên chính tin nhắn này
+    return renderSingleMessage(
       chatId,
+      messageId,
       `
 ⚠️ <b>THÔNG BÁO: TÀI KHOẢN ĐÃ HẾT HẠN HOẶC BỊ THU HỒI TOKEN!</b>
 ━━━━━━━━━━━━━━━━━━━━
-Toàn bộ tin nhắn và nút soi cầu cũ đã tự động bị xóa sạch.
-Nếu bạn bấm vào bất kỳ tin nhắn cũ nào cũng không còn tác dụng.
+Toàn bộ thao tác soi cầu đã tạm khóa. Bạn có thể tự gia hạn nhanh 24/7 bằng thẻ cào để tiếp tục chiến tiếp!
 
 💳 <b>GIA HẠN TỰ ĐỘNG BẰNG THẺ CÀO 24/7:</b>
 • 🌟 <b>Gói VIP 7 Ngày:</b> <code>200.000 VNĐ</code>
@@ -1101,8 +1198,17 @@ ${ADMIN_CONTACT}
 
   await answerCallbackQuery(query.id);
 
+  // ================= HỦY BỎ THAO TÁC / QUAY LẠI MENU =================
+  if (data === 'napthe_cancel') {
+    delete userCardInputState[chatId];
+    delete adminInputState[chatId];
+    const keyboard = isAdmin ? getAdminKeyboard() : getUserKeyboard();
+    const text = formatMainMenuText({ user: query.from, isAdmin });
+    return renderSingleMessage(chatId, messageId, text, { reply_markup: keyboard });
+  }
+
   // ================= NẠP THẺ CÀO TỰ ĐỘNG (DOITHEVIP) =================
-  if (data === 'napthe_menu') {
+  else if (data === 'napthe_menu') {
     const text = `
 💳 <b>HỆ THỐNG NẠP THẺ CÀO BÁN TOKEN BOT TỰ ĐỘNG 24/7</b>
 ━━━━━━━━━━━━━━━━━━━━
@@ -1116,11 +1222,7 @@ ${ADMIN_CONTACT}
 👇 <b>Bấm chọn gói bạn muốn nạp bên dưới:</b>
     `.trim();
 
-    const res = await editMessageText(chatId, messageId, text, { reply_markup: getNapThePackagesKeyboard() });
-    if (!res || !res.ok) {
-      await sendMessage(chatId, text, { reply_markup: getNapThePackagesKeyboard() });
-    }
-    return;
+    return renderSingleMessage(chatId, messageId, text, { reply_markup: getNapThePackagesKeyboard() });
   }
 
   else if (data === 'napthe_pack_7d' || data === 'napthe_pack_30d' || data === 'napthe_pack_custom') {
@@ -1144,11 +1246,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 👇 <b>Bấm chọn loại thẻ bạn đang có:</b>
     `.trim();
 
-    const res = await editMessageText(chatId, messageId, text, { reply_markup: getNapTheTelcoKeyboard(packType) });
-    if (!res || !res.ok) {
-      await sendMessage(chatId, text, { reply_markup: getNapTheTelcoKeyboard(packType) });
-    }
-    return;
+    return renderSingleMessage(chatId, messageId, text, { reply_markup: getNapTheTelcoKeyboard(packType) });
   }
 
   else if (data.startsWith('napthe_telco_')) {
@@ -1163,11 +1261,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 <i>Lưu ý: Bạn cần chọn đúng mệnh giá thẻ để nhà mạng duyệt nhanh nhất!</i>
       `.trim();
 
-      const res = await editMessageText(chatId, messageId, text, { reply_markup: getNapTheAmountKeyboard(telco, packageType) });
-      if (!res || !res.ok) {
-        await sendMessage(chatId, text, { reply_markup: getNapTheAmountKeyboard(telco, packageType) });
-      }
-      return;
+      return renderSingleMessage(chatId, messageId, text, { reply_markup: getNapTheAmountKeyboard(telco, packageType) });
     }
 
     const amount = packageType === '30d' ? 1000000 : 200000;
@@ -1181,8 +1275,9 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
       userId
     };
 
-    return sendMessage(
+    return renderSingleMessage(
       chatId,
+      messageId,
       `
 💳 <b>BƯỚC CUỐI: GỬI MÃ THẺ & SỐ SERI</b>
 ━━━━━━━━━━━━━━━━━━━━
@@ -1194,8 +1289,15 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 <code>MÃ_THẺ SỐ_SERI</code>
 <i>(Ví dụ: <code>123456789012 10001234567890</code> - cách nhau bởi dấu cách)</i>
 ━━━━━━━━━━━━━━━━━━━━
-<i>Gõ /cancel nếu bạn muốn hủy bỏ thao tác này.</i>
-      `.trim()
+<i>(Hệ thống sẽ tự động xóa tin nhắn bạn gửi và cập nhật kết quả ngay trên tin này)</i>
+      `.trim(),
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔙 Hủy Bỏ Thao Tác', callback_data: 'napthe_cancel' }]
+          ]
+        }
+      }
     );
   }
 
@@ -1215,8 +1317,9 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 
     const targetDuration = amount >= 1000000 ? '30 Ngày' : (amount >= 200000 ? '7 Ngày' : '1 Ngày');
 
-    return sendMessage(
+    return renderSingleMessage(
       chatId,
+      messageId,
       `
 💳 <b>BƯỚC CUỐI: GỬI MÃ THẺ & SỐ SERI</b>
 ━━━━━━━━━━━━━━━━━━━━
@@ -1228,8 +1331,15 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 <code>MÃ_THẺ SỐ_SERI</code>
 <i>(Ví dụ: <code>123456789012 10001234567890</code> - cách nhau bởi dấu cách)</i>
 ━━━━━━━━━━━━━━━━━━━━
-<i>Gõ /cancel nếu bạn muốn hủy bỏ thao tác này.</i>
-      `.trim()
+<i>(Hệ thống sẽ tự động xóa tin nhắn bạn gửi và cập nhật kết quả ngay trên tin này)</i>
+      `.trim(),
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔙 Hủy Bỏ Thao Tác', callback_data: 'napthe_cancel' }]
+          ]
+        }
+      }
     );
   }
 
@@ -1256,7 +1366,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
       ]
     };
 
-    return editMessageText(chatId, messageId, '⚡ <b>CHỌN THỜI HẠN TOKEN CẦN TẠO:</b>', {
+    return renderSingleMessage(chatId, messageId, '⚡ <b>CHỌN THỜI HẠN TOKEN CẦN TẠO:</b>', {
       reply_markup: keyboard
     });
   }
@@ -1273,8 +1383,9 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     const key = `VIP-${makeRandomKey(4)}-${makeRandomKey(4)}`;
     await firebase.createToken(key, { duration, note: `Tạo qua Telegram bởi Admin ${userId}` });
 
-    return sendMessage(
+    return renderSingleMessage(
       chatId,
+      messageId,
       `
 ✅ <b>ĐÃ TẠO MÃ TOKEN THÀNH CÔNG!</b>
 ━━━━━━━━━━━━━━━━━━━━
@@ -1373,15 +1484,11 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
       [{ text: '🔙 Quay Lại Menu Admin', callback_data: 'admin_dashboard' }]
     ];
 
-    const res = await editMessageText(chatId, messageId, text, {
+    return renderSingleMessage(chatId, messageId, text, {
       reply_markup: {
         inline_keyboard: inlineKeyboard
       }
     });
-    if (!res || !res.ok) {
-      await sendMessage(chatId, text, { reply_markup: { inline_keyboard: inlineKeyboard } });
-    }
-    return;
   }
 
   // Quay lại Bảng điều khiển Admin
@@ -1396,18 +1503,19 @@ Hệ thống sẵn sàng phục vụ toàn bộ chức năng quản trị cấp 
 👇 <b>Chọn thao tác quản lý hoặc bấm cổng soi cầu bên dưới:</b>
     `.trim();
 
-    return editMessageText(chatId, messageId, text, {
+    return renderSingleMessage(chatId, messageId, text, {
       reply_markup: getAdminKeyboard()
     });
   }
 
-  // Dọn dẹp sạch toàn bộ tin nhắn rác
+  // Dọn dẹp sạch toàn bộ tin nhắn rác nhưng giữ đúng tin menu hiện tại
   else if (data === 'clean_chat') {
     await answerCallbackQuery(query.id, '🧹 Đang dọn dẹp sạch sẽ chat...', false);
-    const count = await cleanAllUserMessages(chatId);
+    const count = await cleanAllUserMessages(chatId, messageId);
     const menuText = formatMainMenuText({ user: query.from, isAdmin });
-    return sendOrReplaceMenu(
+    return renderSingleMessage(
       chatId,
+      messageId,
       `
 🧹 <b>ĐÃ DỌN DẸP SẠCH ${count} TIN NHẮN TRONG CHAT!</b>
 ━━━━━━━━━━━━━━━━━━━━━━━
@@ -1425,8 +1533,9 @@ ${menuText}
     const target = channels.find(c => c.id === portalId);
 
     adminInputState[chatId] = { action: 'awaiting_portal_url', portalId };
-    return sendMessage(
+    return renderSingleMessage(
       chatId,
+      messageId,
       `
 ✏️ <b>CẬP NHẬT LINK CHO CỔNG: [${target ? target.platform + ' - ' + target.gameName : portalId}]</b>
 ━━━━━━━━━━━━━━━━━━━━
@@ -1434,8 +1543,15 @@ ${menuText}
 <code>${target ? target.url : 'Chưa có'}</code>
 
 👉 <b>Hãy gửi link Cloudflare mới (bắt đầu bằng https://...):</b>
-<i>(Hoặc gõ /menu để hủy thao tác)</i>
-      `.trim()
+<i>(Hoặc bấm nút Hủy bên dưới)</i>
+      `.trim(),
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔙 Hủy Bỏ / Quay Lại Menu', callback_data: 'napthe_cancel' }]
+          ]
+        }
+      }
     );
   }
 
@@ -1448,7 +1564,7 @@ ${menuText}
     });
     rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
 
-    return editMessageText(chatId, messageId, '🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>', {
+    return renderSingleMessage(chatId, messageId, '🛠 <b>CHỌN CỔNG GAME BẠN MUỐN CẬP NHẬT LINK:</b>', {
       reply_markup: { inline_keyboard: rows }
     });
   }
@@ -1456,13 +1572,30 @@ ${menuText}
   else if (data === 'admin_set_baotri') {
     if (!isAdmin) return;
     adminInputState[chatId] = { action: 'awaiting_maintenance_msg' };
-    return sendMessage(chatId, `👉 <b>Vui lòng gửi nội dung thông báo bảo trì:</b>`);
+    return renderSingleMessage(
+      chatId,
+      messageId,
+      `👉 <b>Vui lòng gửi tin nhắn nội dung thông báo bảo trì:</b>\n<i>(Hoặc bấm nút Hủy bên dưới)</i>`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔙 Hủy Bỏ / Quay Lại Menu', callback_data: 'napthe_cancel' }]
+          ]
+        }
+      }
+    );
   }
 
   else if (data === 'admin_off_baotri') {
     if (!isAdmin) return;
     await firebase.setMaintenance(false, '', userId);
-    return sendMessage(chatId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b>`);
+    return renderSingleMessage(chatId, messageId, `✅ <b>ĐÃ TẮT BẢO TRÌ!</b>`, {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🔙 Quay Lại Menu Admin', callback_data: 'admin_dashboard' }]
+        ]
+      }
+    });
   }
 
   else if (data === 'admin_view_tokens') {
@@ -1489,11 +1622,7 @@ ${menuText}
       ]
     };
 
-    const res = await editMessageText(chatId, messageId, text, { reply_markup: keyboard });
-    if (!res || !res.ok) {
-      await sendMessage(chatId, text, { reply_markup: keyboard });
-    }
-    return;
+    return renderSingleMessage(chatId, messageId, text, { reply_markup: keyboard });
   }
 
   // ================= GENERAL USER ACTIONS =================
@@ -1502,7 +1631,7 @@ ${menuText}
     const channelId = data.replace('pred_', '');
     const channelData = collector.getChannelData(channelId);
 
-    // Gửi màn hình quét nhịp bàn cầu trước
+    // Gửi màn hình quét nhịp bàn cầu trước trên đúng tin nhắn này
     const scanText = `
 🐻 <b>ĐANG BẮT VỊ & SOI CẦU VẢ NHÀ CÁI...</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
@@ -1513,7 +1642,7 @@ ${menuText}
 ⏳ <i>Chờ 3-5 giây để ra đòn vả vỡ mồm nhà cái...</i>
     `.trim();
 
-    await editMessageText(chatId, messageId, scanText).catch(() => {});
+    await renderSingleMessage(chatId, messageId, scanText).catch(() => {});
 
     // Delay 3.2s để tính toán vị tối ưu
     await new Promise(resolve => setTimeout(resolve, 3200));
@@ -1535,11 +1664,7 @@ ${menuText}
       ]
     };
 
-    const res = await editMessageText(chatId, messageId, text, { reply_markup: keyboard });
-    if (!res || !res.ok) {
-      await sendMessage(chatId, text, { reply_markup: keyboard });
-    }
-    return;
+    return renderSingleMessage(chatId, messageId, text, { reply_markup: keyboard });
   }
 
   // Sảnh Sicbo Bão VIP
@@ -1556,7 +1681,7 @@ ${menuText}
     }
     rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
 
-    return editMessageText(chatId, messageId, `
+    return renderSingleMessage(chatId, messageId, `
 🐉 <b>SẢNH SICBO VIP - ĐẦY ĐỦ CỬA TÀI, XỈU & BÃO (BỘ 3)</b> 🐉
 ━━━━━━━━━━━━━━━━━━━━
 <i>Chỉ riêng Sicbo mới có cửa BÃO (Bộ 3 đồng nhất 1-1-1 đến 6-6-6) với tỉ lệ trả thưởng cực khủng. Hệ thống tự động phân tích và cảnh báo khi có tín hiệu Bão nổ!</i>
@@ -1581,7 +1706,7 @@ ${menuText}
     }
     rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
 
-    return editMessageText(chatId, messageId, `
+    return renderSingleMessage(chatId, messageId, `
 ⚪ <b>SẢNH XÓC ĐĨA LIVE VIP - BẮT VỊ TỨ MÀU CHẴN LẺ</b> ⚪
 ━━━━━━━━━━━━━━━━━━━━
 <i>Phân tích 4 đồng xu quân bài (Sấp đôi 2 Đỏ 2 Trắng, 3 Trắng 1 Đỏ, 3 Đỏ 1 Trắng, Tứ Tử). Tự động nhận diện thế cầu Chẵn/Lẻ!</i>
@@ -1624,7 +1749,7 @@ ${menuText}
     }
     rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
 
-    return editMessageText(chatId, messageId, text, { reply_markup: { inline_keyboard: rows } });
+    return renderSingleMessage(chatId, messageId, text, { reply_markup: { inline_keyboard: rows } });
   }
 
   // Chi tiết phong độ của 1 bàn cầu
@@ -1681,7 +1806,7 @@ ${menuText}
 
     text += `━━━━━━━━━━━━━━━━━━━━`;
 
-    return editMessageText(chatId, messageId, text, {
+    return renderSingleMessage(chatId, messageId, text, {
       reply_markup: {
         inline_keyboard: [
           [{ text: '🔮 Soi Cầu Ngay Cổng Này', callback_data: `pred_${channelId}` }],
@@ -1711,11 +1836,7 @@ ${menuText}
       ]
     };
 
-    const res = await editMessageText(chatId, messageId, histText, { reply_markup: keyboard });
-    if (!res || !res.ok) {
-      await sendMessage(chatId, histText, { reply_markup: keyboard });
-    }
-    return;
+    return renderSingleMessage(chatId, messageId, histText, { reply_markup: keyboard });
   }
 
   // Danh sách tất cả cổng game
@@ -1732,7 +1853,7 @@ ${menuText}
     }
     rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
 
-    return editMessageText(chatId, messageId, '📋 <b>DANH SÁCH TẤT CẢ CÁC CỔNG GAME HỖ TRỢ:</b>\nBấm chọn cổng game bạn muốn soi cầu:', {
+    return renderSingleMessage(chatId, messageId, '📋 <b>DANH SÁCH TẤT CẢ CÁC CỔNG GAME HỖ TRỢ:</b>\nBấm chọn cổng game bạn muốn soi cầu:', {
       reply_markup: { inline_keyboard: rows }
     });
   }
@@ -1742,14 +1863,10 @@ ${menuText}
     let notifyText = '';
     if (notificationSubscribers.has(chatId)) {
       notificationSubscribers.delete(chatId);
-      if (lastBroadcastMessageId[chatId]) {
-        await deleteMessage(chatId, lastBroadcastMessageId[chatId]).catch(() => {});
-        delete lastBroadcastMessageId[chatId];
-      }
-      notifyText = '🔕 Đã TẮT tính năng tự động báo phiên mới.';
+      notifyText = '🔕 Đã TẮT tính năng tự động cập nhật phiên mới.';
     } else {
       notificationSubscribers.add(chatId);
-      notifyText = '🔔 Đã BẬT báo phiên mới tự động (chỉ giữ 1 tin mới nhất, không rác chat)!';
+      notifyText = '🔔 Đã BẬT cập nhật phiên mới tự động (cập nhật ngay trên tin nhắn này)!';
     }
     return answerCallbackQuery(query.id, notifyText, true);
   }
@@ -1779,17 +1896,13 @@ ${menuText}
       inline_keyboard: [[{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]]
     };
 
-    const res = await editMessageText(chatId, messageId, text, { reply_markup: keyboard });
-    if (!res || !res.ok) {
-      await sendMessage(chatId, text, { reply_markup: keyboard });
-    }
-    return;
+    return renderSingleMessage(chatId, messageId, text, { reply_markup: keyboard });
   }
 
   // Thông tin user
   else if (data === 'user_info') {
     const text = `
-👤 <b>HỒ SƠ CHIẾN BINH VẢ VỠ MỒM NHÀ CÁI:</b>
+🐻 <b>HỒ SƠ CHIẾN BINH VẢ VỠ MỒM NHÀ CÁI</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 🆔 <b>Telegram ID:</b> <code>${userId}</code>
 👤 <b>Tên:</b> ${query.from.first_name || ''} (@${query.from.username || 'Chưa đặt user'})
@@ -1805,11 +1918,7 @@ ${menuText}
       ]
     };
 
-    const res = await editMessageText(chatId, messageId, text, { reply_markup: keyboard });
-    if (!res || !res.ok) {
-      await sendMessage(chatId, text, { reply_markup: keyboard });
-    }
-    return;
+    return renderSingleMessage(chatId, messageId, text, { reply_markup: keyboard });
   }
 
   // Quay lại menu chính
@@ -1817,7 +1926,7 @@ ${menuText}
     const keyboard = isAdmin ? getAdminKeyboard() : getUserKeyboard();
     const text = formatMainMenuText({ user: query.from, isAdmin });
 
-    return editMessageText(chatId, messageId, text, {
+    return renderSingleMessage(chatId, messageId, text, {
       reply_markup: keyboard
     });
   }
@@ -1853,7 +1962,7 @@ async function startPolling() {
   }
 }
 
-// Tự động phát sóng phiên mới (chỉ giữ đúng 1 tin mới nhất, không bao giờ spam làm rác chat)
+// Tự động phát sóng phiên mới - Cập nhật trực tiếp lên ĐÚNG 1 TIN NHẮN DUY NHẤT
 setInterval(async () => {
   if (notificationSubscribers.size === 0) return;
 
@@ -1865,25 +1974,19 @@ setInterval(async () => {
     const broadcastMsg = `🔔 <b>TÍN HIỆU PHIÊN MỚI!</b>\n` + formatPredictionMessage(channelData);
 
     for (const userChatId of notificationSubscribers) {
-      // Xóa tin broadcast cũ trước khi gửi tin mới
-      if (lastBroadcastMessageId[userChatId]) {
-        await deleteMessage(userChatId, lastBroadcastMessageId[userChatId]).catch(() => {});
-        delete lastBroadcastMessageId[userChatId];
-      }
-      const res = await sendMessage(userChatId, broadcastMsg, {
+      await sendOrReplaceMenu(userChatId, broadcastMsg, {
         reply_markup: {
           inline_keyboard: [
             [
               { text: '🎲 Soi Cầu Thêm', callback_data: 'pred_sunwin_tx' },
               { text: '🔕 Tắt Báo Tự Động', callback_data: 'toggle_notify' }
+            ],
+            [
+              { text: '🔙 Quay Lại Menu', callback_data: 'back_main' }
             ]
           ]
         }
       }).catch(() => {});
-
-      if (res && res.ok && res.result?.message_id) {
-        lastBroadcastMessageId[userChatId] = res.result.message_id;
-      }
     }
   }
 }, 6000);
