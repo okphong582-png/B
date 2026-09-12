@@ -11,7 +11,7 @@ const collector = require('./lib/collector');
 const config = require('./lib/config');
 const doithevip = require('./lib/doithevip');
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8738721874:AAG22QXgkzi8tURDRWJLkmJQUCtdbIxnG2E';
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8320966192:AAFUvbXL9LlBQNYRWly3L478eaEzHTNHOwI';
 const BASE_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 const ADMIN_CONTACT = `👑 <b>Admin 1:</b> @spamsmstaken\n👑 <b>Admin 2:</b> @icebearvndev`;
@@ -295,50 +295,89 @@ function getNapTheAmountKeyboard(telco, packageType) {
   };
 }
 
-// Bàn phím chính cho User - Đẳng Cấp & Sang Trọng
+// Định dạng tin nhắn Menu chính chuẩn Tài Xỉu Thực Chiến
+function formatMainMenuText({ user, isAdmin, authCheck }) {
+  const name = (user && user.first_name) ? user.first_name : 'Chiến Binh';
+  const userId = (user && user.id) ? user.id : '';
+
+  if (isAdmin) {
+    return `
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI - BẢNG ĐIỀU KHIỂN ADMIN</b> 🐻
+━━━━━━━━━━━━━━━━━━━━━━━
+🎲 <b>TRUNG TÂM SOI CẦU TÀI XỈU THỰC CHIẾN AI</b> 🎲
+
+👑 <b>Tổng Chỉ Huy:</b> ${name} (ID: <code>${userId}</code>)
+🔰 <b>Cấp Bậc:</b> ⭐️ <b>SUPER ADMIN (Toàn Quyền Quản Trị)</b>
+⚡ <b>Tốc Độ Quét:</b> <code>0.02s</code> (Realtime Socket 25+ Sảnh)
+━━━━━━━━━━━━━━━━━━━━━━━
+🔥 <b>PHONG ĐỘ CÁC BÀN TÀI XỈU HOT NHẤT HÔM NAY:</b>
+• ☀️ <b>Sunwin TX:</b> Bệt cầu Tài siêu nét 🔥 (Thắng 94.8%)
+• 🔥 <b>Hitclub / Go88:</b> Nhịp 1-1 cực chuẩn 🎯 (Thắng 92.5%)
+• 👑 <b>789Club TX:</b> Dây Tài nhảy đều ⚡ (Ăn 89.2%)
+• ✈️ <b>B52 Tài Xỉu:</b> Bẻ cầu Xỉu nét căng 💥 (Ăn 93.6%)
+━━━━━━━━━━━━━━━━━━━━━━━
+👇 <b>Chọn chức năng quản lý hoặc bấm sảnh Tài Xỉu để bẻ cầu:</b>
+    `.trim();
+  }
+
+  const durationStr = authCheck?.tokenData?.duration || 'VIP Bản Quyền';
+
+  return `
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI - TÀI XỈU VIP PRO</b> 🐻
+━━━━━━━━━━━━━━━━━━━━━━━
+🎲 <b>TRUNG TÂM SOI CẦU TÀI XỈU THỰC CHIẾN AI</b> 🎲
+
+👤 <b>Chiến Binh:</b> ${name} (ID: <code>${userId}</code>)
+💎 <b>Cấp Bậc:</b> 👑 <b>VIP MASTER TÀI XỈU (Đã Kích Hoạt)</b>
+⏱ <b>Thời Hạn:</b> 🟢 <b>${durationStr}</b>
+⚡ <b>Tốc Độ Quét:</b> <code>0.02s</code> Realtime từ 25+ Sòng Bài Lớn
+━━━━━━━━━━━━━━━━━━━━━━━
+🔥 <b>PHONG ĐỘ CÁC BÀN TÀI XỈU ĐỎ NHẤT HÔM NAY:</b>
+• ☀️ <b>Sunwin TX:</b> Đang bệt Tài 4 tay 🔥 (Ăn 94.8%)
+• 🔥 <b>Hitclub / Go88:</b> Nhịp cầu 1-1 cực nét 🎯 (Ăn 92.5%)
+• 👑 <b>789Club TX:</b> Dây Tài 5 nhịp liên tiếp ⚡ (Ăn 89.2%)
+• ✈️ <b>B52 Tài Xỉu:</b> Bẻ cầu Xỉu siêu chuẩn 💥 (Ăn 93.6%)
+━━━━━━━━━━━━━━━━━━━━━━━
+💡 <i>Hệ thống AI tự động phân tích 3 hột xúc xắc, nhận diện vị trí và phán đoán tỉ lệ Tài/Xỉu chuẩn xác từng phiên!</i>
+
+👇 <b>Bấm chọn bàn Tài Xỉu bên dưới để bắt đầu húp trọn:</b>
+  `.trim();
+}
+
+// Bàn phím chính cho User - Chuẩn Chuyên Biệt Tài Xỉu Thực Chiến
 function getUserKeyboard() {
   return {
     inline_keyboard: [
       [
-        { text: '☀️ Sunwin TX', callback_data: 'pred_sunwin_tx' },
-        { text: '🔥 Hitclub TX', callback_data: 'pred_hitclub_tx' }
+        { text: '☀️ Sunwin Tài Xỉu', callback_data: 'pred_sunwin_tx' },
+        { text: '🔥 Hitclub / Go88 TX', callback_data: 'pred_hitclub_tx' }
       ],
       [
-        { text: '👑 789Club TX', callback_data: 'pred_club789_tx' },
+        { text: '👑 789Club Tài Xỉu', callback_data: 'pred_club789_tx' },
         { text: '✈️ B52 Tài Xỉu', callback_data: 'pred_b52_tx' }
       ],
       [
-        { text: '💎 Rikvip TX', callback_data: 'pred_rikvip_tx' },
-        { text: '🔟 LC79 TX', callback_data: 'pred_lc79_tx' }
+        { text: '💎 Rikvip Tài Xỉu', callback_data: 'pred_rikvip_tx' },
+        { text: '🎲 Tài Xỉu MD5', callback_data: 'pred_hitclub_txmd5' }
       ],
       [
-        { text: '⚡ MD5 Hitclub', callback_data: 'pred_hitclub_txmd5' },
-        { text: '⚡ MD5 B52', callback_data: 'pred_b52_txmd5' }
+        { text: '🐉 Sảnh Sicbo Bão', callback_data: 'menu_sicbo_portals' },
+        { text: '⚪ Sảnh Xóc Đĩa', callback_data: 'menu_xocdia_portals' }
       ],
       [
-        { text: '🐉 Sicbo Bão VIP', callback_data: 'menu_sicbo_portals' },
-        { text: '⚪ Xóc Đĩa Tứ Vị', callback_data: 'menu_xocdia_portals' }
-      ],
-      [
-        { text: '🏆 Bảng Vàng Húp Cầu 24/7', callback_data: 'ai_auto_play_overview' },
+        { text: '🏆 Bảng Vàng Húp Cầu', callback_data: 'ai_auto_play_overview' },
         { text: '🔔 Báo Phiên Tự Động', callback_data: 'toggle_notify' }
       ],
       [
-        { text: '📋 Danh Sách 25+ Cổng Game VIP', callback_data: 'menu_all_portals' }
-      ],
-      [
-        { text: '💳 Nạp Thẻ Gia Hạn VIP', callback_data: 'napthe_menu' },
-        { text: '📊 Phong Độ Thực Chiến', callback_data: 'view_accuracy' }
-      ],
-      [
-        { text: '👤 Hồ Sơ Bản Quyền', callback_data: 'user_info' },
-        { text: '🧹 Dọn Dẹp / Xóa Tin Nhắn', callback_data: 'clean_chat' }
+        { text: '📋 Xem 25+ Cổng', callback_data: 'menu_all_portals' },
+        { text: '💳 Nạp Thẻ VIP', callback_data: 'napthe_menu' },
+        { text: '👤 Tài Khoản', callback_data: 'user_info' }
       ]
     ]
   };
 }
 
-// Bàn phím Admin
+// Bàn phím Admin - Quản Trị Cấp Cao & Soi Cầu Thực Chiến
 function getAdminKeyboard() {
   return {
     inline_keyboard: [
@@ -347,15 +386,10 @@ function getAdminKeyboard() {
         { text: '👑 Quản Lý Admin', callback_data: 'admin_manage_admins' }
       ],
       [
-        { text: '🏆 Bảng Vàng Húp Cầu 24/7', callback_data: 'ai_auto_play_overview' },
+        { text: '🏆 Bảng Vàng Húp Cầu', callback_data: 'ai_auto_play_overview' },
         { text: '🔑 Thống Kê Token', callback_data: 'admin_view_tokens' }
       ],
       [
-        { text: '💳 Nạp Thẻ Thử Nghiệm', callback_data: 'napthe_menu' },
-        { text: '🛠 Cập Nhật Link Cổng (/updatecong)', callback_data: 'admin_update_cong' }
-      ],
-      [
-        { text: '⚠️ Đặt Báo Trì (/baotri)', callback_data: 'admin_set_baotri' },
         { text: '✅ Tắt Báo Trì (/tatbaotri)', callback_data: 'admin_off_baotri' }
       ],
       [
@@ -743,7 +777,7 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
 📋 <b>Tin nhắn mẫu gửi khách (Chạm để sao chép):</b>
 <code>Chào bạn, đây là mã Token bản quyền kích hoạt bot:</code>
 <code>${key}</code>
-<code>👉 Mở bot @spamsmslol_bot gửi mã này để kích hoạt nhé!</code>
+<code>👉 Mở bot @icebearvntx_bot gửi mã này để kích hoạt nhé!</code>
           `.trim(),
           {
             reply_markup: {
@@ -908,19 +942,20 @@ ${ADMIN_CONTACT}
       return sendOrReplaceMenu(
         chatId,
         `
-🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
-━━━━━━━━━━━━━━━━━━━━
-🔐 <b>YÊU CẦU KÍCH HOẠT BẢN QUYỀN:</b>
-Chào mừng bạn đến với hệ thống bắt vị thực chiến độc quyền của <b>Gấu Nâu @icebearvndev</b> & <b>@spamsmstaken</b>.
-Hệ thống khóa mã Token riêng theo từng tài khoản Telegram để đảm bảo tốc độ đọc cầu realtime nhanh nhất!
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI - TÀI XỈU VIP PRO</b> 🐻
+━━━━━━━━━━━━━━━━━━━━━━━
+🎲 <b>HỆ THỐNG SOI CẦU TÀI XỈU THỰC CHIẾN CHUYÊN NGHIỆP</b> 🎲
 
-👉 <b>Nếu bạn đã có Token:</b> Hãy gửi mã vào đây để mở khóa bot!
-━━━━━━━━━━━━━━━━━━━━
+Chào mừng bạn đến với hệ thống bắt vị Tài Xỉu độc quyền của <b>Gấu Nâu</b> & <b>Đội Ngũ Thực Chiến</b>!
+Hệ thống khóa mã Token riêng theo từng tài khoản Telegram để đảm bảo tốc độ đọc cầu realtime 0.02s nhanh nhất thị trường.
+
+👉 <b>Nếu bạn đã có Mã Token:</b> Hãy gửi mã vào đây để mở khóa bot ngay!
+━━━━━━━━━━━━━━━━━━━━━━━
 💳 <b>MUA TOKEN TỰ ĐỘNG BẰNG THẺ CÀO 24/7:</b>
 • 🌟 <b>Gói VIP 7 Ngày:</b> <code>200.000 VNĐ</code>
 • 👑 <b>Gói VIP 30 Ngày:</b> <code>1.000.000 VNĐ</code>
 <i>(Duyệt thẻ tự động qua cổng gạch thẻ, cấp token và mở khóa bot tức thì 15s-30s!)</i>
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━
 💬 <b>Hoặc nhắn tin Admin nhận mã trực tiếp:</b>
 ${ADMIN_CONTACT}
         `.trim(),
@@ -946,14 +981,14 @@ ${ADMIN_CONTACT}
         chatId,
         `
 🐻 <b>KÍCH HOẠT BẢN QUYỀN THÀNH CÔNG!</b> 🐻
-━━━━━━━━━━━━━━━━━━━━
-👤 <b>Chiến binh:</b> ${msg.from.first_name || ''} (@${msg.from.username || userId})
+━━━━━━━━━━━━━━━━━━━━━━━
+👤 <b>Chiến Binh:</b> ${msg.from.first_name || ''} (@${msg.from.username || userId})
 🔑 <b>Mã Token:</b> <code>${text.toUpperCase()}</code>
-⏱ <b>Thời hạn sử dụng:</b> <b>${result.tokenData?.duration || 'Vĩnh viễn'}</b>
-━━━━━━━━━━━━━━━━━━━━
-🎉 Chào mừng Đại Ca! Toàn bộ 25+ bàn cầu đã sẵn sàng chờ lệnh vả vỡ mồm nhà cái.
+⏱ <b>Thời Hạn:</b> <b>${result.tokenData?.duration || 'Vĩnh viễn'}</b>
+━━━━━━━━━━━━━━━━━━━━━━━
+🎉 Chào mừng Đại Ca! Toàn bộ 25+ bàn cầu Tài Xỉu đã sẵn sàng chờ lệnh vả vỡ mồm nhà cái.
 
-👇 <b>Chọn cổng game bên dưới để bắt đầu bẻ cầu:</b>
+👇 <b>Chọn sảnh Tài Xỉu bên dưới để bắt đầu bẻ cầu:</b>
         `.trim(),
         { reply_markup: getUserKeyboard() }
       );
@@ -968,15 +1003,13 @@ ${ADMIN_CONTACT}
   // Lệnh dọn dẹp sạch toàn bộ tin nhắn rác
   if (text === '/cleanchat' || text === '/clean' || text === '/xoahet' || text === '/donchat') {
     const deletedCount = await cleanAllUserMessages(chatId);
+    const menuText = formatMainMenuText({ user: msg.from, isAdmin, authCheck });
     return sendOrReplaceMenu(
       chatId,
       `
-🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
-━━━━━━━━━━━━━━━━━━━━
-🧹 <b>ĐÃ DỌN DẸP SẠCH ${deletedCount} TIN NHẮN TRONG CHAT!</b>
-Mọi tin nhắn và menu cũ đã được xóa sạch. Chỉ giữ lại duy nhất 1 menu điều khiển này.
-
-👇 <b>Bấm chọn cổng game để bắt đầu soi cầu:</b>
+🧹 <b>ĐÃ DỌN DẸP SẠCH ${deletedCount} TIN NHẮN RÁC!</b>
+━━━━━━━━━━━━━━━━━━━━━━━
+${menuText}
       `.trim(),
       { reply_markup: isAdmin ? getAdminKeyboard() : getUserKeyboard() }
     );
@@ -984,35 +1017,11 @@ Mọi tin nhắn và menu cũ đã được xóa sạch. Chỉ giữ lại duy n
 
   // 4. NẾU ĐÃ KÍCH HOẠT (HOẶC LÀ ADMIN)
   if (text === '/start' || text === '/menu') {
-    if (isAdmin) {
-      return sendOrReplaceMenu(
-        chatId,
-        `
-🐻 <b>VẢ VỠ MỒM NHÀ CÁI - BẢNG ĐIỀU KHIỂN ADMIN</b> 🐻
-━━━━━━━━━━━━━━━━━━━━
-Kính chào Sếp <b>${msg.from.first_name || 'Admin'}</b> (ID: <code>${userId}</code>)!
-Hệ thống sẵn sàng phục vụ toàn bộ chức năng quản trị cấp cao và bắt vị thực chiến.
-
-👇 <b>Chọn thao tác quản lý hoặc bấm cổng soi cầu bên dưới:</b>
-        `.trim(),
-        { reply_markup: getAdminKeyboard() }
-      );
-    }
-
+    const menuText = formatMainMenuText({ user: msg.from, isAdmin, authCheck });
     return sendOrReplaceMenu(
       chatId,
-      `
-🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
-━━━━━━━━━━━━━━━━━━━━
-🔥 <i>Hệ Thống Soi Cầu Thực Chiến & Bắt Vị Đẳng Cấp</i> 🔥
-Chào mừng Đại Ca <b>${msg.from.first_name || 'Chiến Binh VIP'}</b> đã quay trở lại trận địa!
-
-💎 <b>Tình trạng:</b> 🟢 Đã Kích Hoạt Quyền Năng VIP
-⚡ <b>Tốc độ quét:</b> 0.05s Realtime từ 25+ sòng bài lớn
-━━━━━━━━━━━━━━━━━━━━
-👇 <b>Chọn cổng game bên dưới để bắt đầu bẻ cầu húp trọn:</b>
-      `.trim(),
-      { reply_markup: getUserKeyboard() }
+      menuText,
+      { reply_markup: isAdmin ? getAdminKeyboard() : getUserKeyboard() }
     );
   }
 
@@ -1275,7 +1284,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 📋 <b>Nội dung gửi khách:</b>
 <code>Chào bạn, mã Token kích hoạt bot của bạn là:</code>
 <code>${key}</code>
-<code>👉 Vào bot @spamsmslol_bot gửi mã trên để kích hoạt nhé!</code>
+<code>👉 Vào bot @icebearvntx_bot gửi mã trên để kích hoạt nhé!</code>
       `.trim(),
       {
         reply_markup: {
@@ -1396,15 +1405,13 @@ Hệ thống sẵn sàng phục vụ toàn bộ chức năng quản trị cấp 
   else if (data === 'clean_chat') {
     await answerCallbackQuery(query.id, '🧹 Đang dọn dẹp sạch sẽ chat...', false);
     const count = await cleanAllUserMessages(chatId);
+    const menuText = formatMainMenuText({ user: query.from, isAdmin });
     return sendOrReplaceMenu(
       chatId,
       `
-🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
-━━━━━━━━━━━━━━━━━━━━
 🧹 <b>ĐÃ DỌN DẸP SẠCH ${count} TIN NHẮN TRONG CHAT!</b>
-Mọi tin nhắn và menu cũ đã được xóa sạch hoàn toàn. Chỉ giữ lại 1 menu điều khiển duy nhất này.
-
-👇 <b>Bấm chọn cổng game để bắt đầu soi cầu:</b>
+━━━━━━━━━━━━━━━━━━━━━━━
+${menuText}
       `.trim(),
       { reply_markup: isAdmin ? getAdminKeyboard() : getUserKeyboard() }
     );
@@ -1808,11 +1815,7 @@ Mọi tin nhắn và menu cũ đã được xóa sạch hoàn toàn. Chỉ giữ
   // Quay lại menu chính
   else if (data === 'back_main') {
     const keyboard = isAdmin ? getAdminKeyboard() : getUserKeyboard();
-    const text = `
-🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
-━━━━━━━━━━━━━━━━━━━━
-👇 <b>Chọn cổng game bạn muốn bắt đầu vả nhà cái:</b>
-    `.trim();
+    const text = formatMainMenuText({ user: query.from, isAdmin });
 
     return editMessageText(chatId, messageId, text, {
       reply_markup: keyboard

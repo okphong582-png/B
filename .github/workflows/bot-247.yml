@@ -33,7 +33,7 @@ jobs:
       - name: Run Telegram Bot & Server 24/7
         env:
           PORT: 3000
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '8738721874:AAG22QXgkzi8tURDRWJLkmJQUCtdbIxnG2E' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '8320966192:AAFUvbXL9LlBQNYRWly3L478eaEzHTNHOwI' }}
         run: node runner-247.js
 
       - name: Auto-Trigger Next Run (Self-Restart)
