@@ -148,26 +148,46 @@ async function callApi(method, body = {}) {
   }
 }
 
-// Bộ nhớ lưu ID các tin nhắn đã gửi cho từng chat để tự động xóa sạch khi hết hạn
+// Quản lý tin nhắn để chống clone và dọn dẹp chat
 const userMessageHistory = {}; // { [chatId]: Set of messageId }
+const lastMenuMessageId = {}; // { [chatId]: messageId } - Chỉ giữ duy nhất 1 menu trong chat
+const lastBroadcastMessageId = {}; // { [chatId]: messageId } - Chỉ giữ duy nhất 1 tin báo phiên mới
 
 function trackUserMessage(chatId, messageId) {
   if (!chatId || !messageId) return;
   if (!userMessageHistory[chatId]) userMessageHistory[chatId] = new Set();
   userMessageHistory[chatId].add(messageId);
-  if (userMessageHistory[chatId].size > 50) {
+  if (userMessageHistory[chatId].size > 200) {
     const arr = Array.from(userMessageHistory[chatId]);
-    userMessageHistory[chatId] = new Set(arr.slice(-50));
+    userMessageHistory[chatId] = new Set(arr.slice(-200));
   }
 }
 
 async function cleanAllUserMessages(chatId) {
-  if (!chatId || !userMessageHistory[chatId]) return;
+  if (!chatId || !userMessageHistory[chatId]) return 0;
   const ids = Array.from(userMessageHistory[chatId]);
   userMessageHistory[chatId].clear();
+  delete lastMenuMessageId[chatId];
+  delete lastBroadcastMessageId[chatId];
+  let count = 0;
   for (const mid of ids) {
     await deleteMessage(chatId, mid).catch(() => {});
+    count++;
   }
+  return count;
+}
+
+// Gửi menu mới và tự động xóa menu cũ trong chat để không bị clone tràn màn hình
+async function sendOrReplaceMenu(chatId, text, options = {}) {
+  if (lastMenuMessageId[chatId]) {
+    await deleteMessage(chatId, lastMenuMessageId[chatId]).catch(() => {});
+    delete lastMenuMessageId[chatId];
+  }
+  const res = await sendMessage(chatId, text, options);
+  if (res && res.ok && res.result?.message_id) {
+    lastMenuMessageId[chatId] = res.result.message_id;
+  }
+  return res;
 }
 
 async function sendMessage(chatId, text, options = {}) {
@@ -311,7 +331,8 @@ function getUserKeyboard() {
         { text: '📊 Phong Độ Thực Chiến', callback_data: 'view_accuracy' }
       ],
       [
-        { text: '👤 Hồ Sơ Bản Quyền', callback_data: 'user_info' }
+        { text: '👤 Hồ Sơ Bản Quyền', callback_data: 'user_info' },
+        { text: '🧹 Dọn Dẹp / Xóa Tin Nhắn', callback_data: 'clean_chat' }
       ]
     ]
   };
@@ -344,6 +365,9 @@ function getAdminKeyboard() {
       [
         { text: '✈️ B52 TX', callback_data: 'pred_b52_tx' },
         { text: '📋 Tất Cả 25+ Cổng Game VIP', callback_data: 'menu_all_portals' }
+      ],
+      [
+        { text: '🧹 Dọn Dẹp / Xóa Tin Nhắn', callback_data: 'clean_chat' }
       ]
     ]
   };
@@ -412,13 +436,13 @@ function formatPredictionMessage(channelData) {
   }
 
   const battleStats = `
-🐻❄️ <b>PHONG ĐỘ THỰC CHIẾN [${channel.platform}]:</b>
+🐻 <b>PHONG ĐỘ THỰC CHIẾN [${channel.platform}]:</b>
 • Lượt bám cầu: <b>#${ai?.epochs || 85} tay liên tiếp</b>
 • Tỉ lệ húp bàn cầu: <b>${ai?.win_rate || backtest.winRate}%</b> (${ai?.total_wins || 42} Húp / ${ai?.total_losses || 8} Gãy)
 • Chuỗi ăn thông hiện tại: <b>${ai?.current_streak ? '🔥 ' + ai.current_streak + ' tay liên tiếp' : '🔥 3 tay'}</b>`;
 
   return `
-🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 🎮 <b>Cổng cược:</b> ${channel.icon || '🎲'} <b>${channel.platform}</b> (${channel.gameName})
 🎯 <b>MỤC TIÊU PHIÊN:</b> <code>#${nextNum}</code>
@@ -576,7 +600,7 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
     const overviewList = collector.getAiOverview();
     const top5 = overviewList.slice(0, 8);
 
-    let bxhText = `🐻❄️ <b>BẢNG VÀNG THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️\n━━━━━━━━━━━━━━━━━━━━\n`;
+    let bxhText = `🐻 <b>BẢNG VÀNG THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻\n━━━━━━━━━━━━━━━━━━━━\n`;
     bxhText += `<i>Thống kê các bàn cầu đang có phong độ ăn thông và húp dày nhất hiện tại. Hệ thống bám cầu thực chiến 24/7 và đối chiếu kết quả từng giây với nhà cái!</i>\n\n`;
     bxhText += `🏆 <b>TOP BÀN CẦU ĐANG HÚP KHÉT NHẤT:</b>\n`;
 
@@ -601,7 +625,7 @@ Tự động duyệt thẻ siêu tốc (15s - 45s) và cấp token kích hoạt 
     }
     rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
 
-    return sendMessage(chatId, bxhText, { reply_markup: { inline_keyboard: rows } });
+    return sendOrReplaceMenu(chatId, bxhText, { reply_markup: { inline_keyboard: rows } });
   }
 
   // 1. CÁC LỆNH DÀNH CHO ADMIN
@@ -881,13 +905,13 @@ ${ADMIN_CONTACT}
     }
 
     if (text === '/start') {
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
         `
-🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 🔐 <b>YÊU CẦU KÍCH HOẠT BẢN QUYỀN:</b>
-Chào mừng bạn đến với hệ thống bắt vị thực chiến độc quyền của <b>Gấu Tuyết @icebearvndev</b> & <b>@spamsmstaken</b>.
+Chào mừng bạn đến với hệ thống bắt vị thực chiến độc quyền của <b>Gấu Nâu @icebearvndev</b> & <b>@spamsmstaken</b>.
 Hệ thống khóa mã Token riêng theo từng tài khoản Telegram để đảm bảo tốc độ đọc cầu realtime nhanh nhất!
 
 👉 <b>Nếu bạn đã có Token:</b> Hãy gửi mã vào đây để mở khóa bot!
@@ -918,10 +942,10 @@ ${ADMIN_CONTACT}
     // Nhập token kích hoạt
     const result = await firebase.activateUserWithToken(userId, msg.from, text);
     if (result.success) {
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
         `
-🐻❄️ <b>KÍCH HOẠT BẢN QUYỀN THÀNH CÔNG!</b> 🐻❄️
+🐻 <b>KÍCH HOẠT BẢN QUYỀN THÀNH CÔNG!</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 👤 <b>Chiến binh:</b> ${msg.from.first_name || ''} (@${msg.from.username || userId})
 🔑 <b>Mã Token:</b> <code>${text.toUpperCase()}</code>
@@ -941,13 +965,30 @@ ${ADMIN_CONTACT}
     }
   }
 
+  // Lệnh dọn dẹp sạch toàn bộ tin nhắn rác
+  if (text === '/cleanchat' || text === '/clean' || text === '/xoahet' || text === '/donchat') {
+    const deletedCount = await cleanAllUserMessages(chatId);
+    return sendOrReplaceMenu(
+      chatId,
+      `
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
+━━━━━━━━━━━━━━━━━━━━
+🧹 <b>ĐÃ DỌN DẸP SẠCH ${deletedCount} TIN NHẮN TRONG CHAT!</b>
+Mọi tin nhắn và menu cũ đã được xóa sạch. Chỉ giữ lại duy nhất 1 menu điều khiển này.
+
+👇 <b>Bấm chọn cổng game để bắt đầu soi cầu:</b>
+      `.trim(),
+      { reply_markup: isAdmin ? getAdminKeyboard() : getUserKeyboard() }
+    );
+  }
+
   // 4. NẾU ĐÃ KÍCH HOẠT (HOẶC LÀ ADMIN)
   if (text === '/start' || text === '/menu') {
     if (isAdmin) {
-      return sendMessage(
+      return sendOrReplaceMenu(
         chatId,
         `
-🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI - BẢNG ĐIỀU KHIỂN ADMIN</b> 🐻❄️
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI - BẢNG ĐIỀU KHIỂN ADMIN</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 Kính chào Sếp <b>${msg.from.first_name || 'Admin'}</b> (ID: <code>${userId}</code>)!
 Hệ thống sẵn sàng phục vụ toàn bộ chức năng quản trị cấp cao và bắt vị thực chiến.
@@ -958,10 +999,10 @@ Hệ thống sẵn sàng phục vụ toàn bộ chức năng quản trị cấp 
       );
     }
 
-    return sendMessage(
+    return sendOrReplaceMenu(
       chatId,
       `
-🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 🔥 <i>Hệ Thống Soi Cầu Thực Chiến & Bắt Vị Đẳng Cấp</i> 🔥
 Chào mừng Đại Ca <b>${msg.from.first_name || 'Chiến Binh VIP'}</b> đã quay trở lại trận địa!
@@ -976,13 +1017,14 @@ Chào mừng Đại Ca <b>${msg.from.first_name || 'Chiến Binh VIP'}</b> đã 
   }
 
   if (text === '/help') {
-    return sendMessage(
+    return sendOrReplaceMenu(
       chatId,
       `
 📖 <b>HƯỚNG DẪN SỬ DỤNG BOT:</b>
-• /menu - Mở bảng chọn cổng game
+• /menu - Mở bảng chọn cổng game (chỉ giữ 1 menu duy nhất)
+• /cleanchat - Dọn dẹp xóa sạch toàn bộ tin nhắn rác cũ trong chat
 • Bấm nút cổng game để xem dự đoán phiên tiếp theo
-• Bấm <b>"Bật Báo Tự Động"</b> để bot tự động gửi tin khi có phiên mới
+• Bấm <b>"Bật Báo Tự Động"</b> để bot tự động cập nhật phiên mới
 💬 <b>Hỗ trợ Admin:</b>\n${ADMIN_CONTACT}
       `.trim()
     );
@@ -1052,9 +1094,7 @@ ${ADMIN_CONTACT}
 
   // ================= NẠP THẺ CÀO TỰ ĐỘNG (DOITHEVIP) =================
   if (data === 'napthe_menu') {
-    return sendMessage(
-      chatId,
-      `
+    const text = `
 💳 <b>HỆ THỐNG NẠP THẺ CÀO BÁN TOKEN BOT TỰ ĐỘNG 24/7</b>
 ━━━━━━━━━━━━━━━━━━━━
 ⚡ Gạch thẻ tự động siêu tốc qua cổng <b>DoiTheVip.com</b> (15s - 45s)
@@ -1065,9 +1105,13 @@ ${ADMIN_CONTACT}
 • 👑 <b>GÓI VIP 30 NGÀY:</b> <code>1.000.000 VNĐ</code>
 ━━━━━━━━━━━━━━━━━━━━
 👇 <b>Bấm chọn gói bạn muốn nạp bên dưới:</b>
-      `.trim(),
-      { reply_markup: getNapThePackagesKeyboard() }
-    );
+    `.trim();
+
+    const res = await editMessageText(chatId, messageId, text, { reply_markup: getNapThePackagesKeyboard() });
+    if (!res || !res.ok) {
+      await sendMessage(chatId, text, { reply_markup: getNapThePackagesKeyboard() });
+    }
+    return;
   }
 
   else if (data === 'napthe_pack_7d' || data === 'napthe_pack_30d' || data === 'napthe_pack_custom') {
@@ -1081,9 +1125,7 @@ ${ADMIN_CONTACT}
       packType = 'custom';
     }
 
-    return sendMessage(
-      chatId,
-      `
+    const text = `
 📡 <b>CHỌN NHÀ MẠNG CHO [GÓI ${packName}]</b>
 ━━━━━━━━━━━━━━━━━━━━
 Hỗ trợ tất cả các nhà mạng và thẻ game:
@@ -1091,9 +1133,13 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 • Thẻ Zing, Thẻ Gate
 ━━━━━━━━━━━━━━━━━━━━
 👇 <b>Bấm chọn loại thẻ bạn đang có:</b>
-      `.trim(),
-      { reply_markup: getNapTheTelcoKeyboard(packType) }
-    );
+    `.trim();
+
+    const res = await editMessageText(chatId, messageId, text, { reply_markup: getNapTheTelcoKeyboard(packType) });
+    if (!res || !res.ok) {
+      await sendMessage(chatId, text, { reply_markup: getNapTheTelcoKeyboard(packType) });
+    }
+    return;
   }
 
   else if (data.startsWith('napthe_telco_')) {
@@ -1102,15 +1148,17 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     const packageType = parts[1] || '7d';
 
     if (packageType === 'custom') {
-      return sendMessage(
-        chatId,
-        `
+      const text = `
 💵 <b>CHỌN MỆNH GIÁ THẺ [${telco}] CỦA BẠN:</b>
 ━━━━━━━━━━━━━━━━━━━━
 <i>Lưu ý: Bạn cần chọn đúng mệnh giá thẻ để nhà mạng duyệt nhanh nhất!</i>
-        `.trim(),
-        { reply_markup: getNapTheAmountKeyboard(telco, packageType) }
-      );
+      `.trim();
+
+      const res = await editMessageText(chatId, messageId, text, { reply_markup: getNapTheAmountKeyboard(telco, packageType) });
+      if (!res || !res.ok) {
+        await sendMessage(chatId, text, { reply_markup: getNapTheAmountKeyboard(telco, packageType) });
+      }
+      return;
     }
 
     const amount = packageType === '30d' ? 1000000 : 200000;
@@ -1248,11 +1296,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
       const targetId = data.replace('toggle_role_', '');
       await firebase.toggleAdminRole(targetId);
       const isNowAdmin = firebase.isAdmin(targetId);
-      if (isNowAdmin) {
-        await sendMessage(chatId, `👑 <b>ĐÃ NÂNG LÊN ADMIN!</b>\nTài khoản ID <code>${targetId}</code> đã nhận lại toàn bộ quyền quản trị.`);
-      } else {
-        await sendMessage(chatId, `🔄 <b>ĐÃ CHUYỂN THÀNH DÂN THƯỜNG!</b>\nTài khoản ID <code>${targetId}</code> đã bị thu hồi quyền quản trị, muốn soi cầu phải dùng token như người bình thường.`);
-      }
+      await answerCallbackQuery(query.id, isNowAdmin ? `👑 Đã nâng ID ${targetId} lên Admin!` : `🔄 Đã chuyển ID ${targetId} thành Dân Thường!`, true);
     }
 
     const adminsObj = await firebase.getAllAdmins();
@@ -1320,11 +1364,50 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
       [{ text: '🔙 Quay Lại Menu Admin', callback_data: 'admin_dashboard' }]
     ];
 
-    return sendMessage(chatId, text, {
+    const res = await editMessageText(chatId, messageId, text, {
       reply_markup: {
         inline_keyboard: inlineKeyboard
       }
     });
+    if (!res || !res.ok) {
+      await sendMessage(chatId, text, { reply_markup: { inline_keyboard: inlineKeyboard } });
+    }
+    return;
+  }
+
+  // Quay lại Bảng điều khiển Admin
+  else if (data === 'admin_dashboard' || data === 'admin_menu') {
+    if (!isAdmin) return;
+    const text = `
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI - BẢNG ĐIỀU KHIỂN ADMIN</b> 🐻
+━━━━━━━━━━━━━━━━━━━━
+Kính chào Sếp <b>${query.from.first_name || 'Admin'}</b> (ID: <code>${userId}</code>)!
+Hệ thống sẵn sàng phục vụ toàn bộ chức năng quản trị cấp cao và bắt vị thực chiến.
+
+👇 <b>Chọn thao tác quản lý hoặc bấm cổng soi cầu bên dưới:</b>
+    `.trim();
+
+    return editMessageText(chatId, messageId, text, {
+      reply_markup: getAdminKeyboard()
+    });
+  }
+
+  // Dọn dẹp sạch toàn bộ tin nhắn rác
+  else if (data === 'clean_chat') {
+    await answerCallbackQuery(query.id, '🧹 Đang dọn dẹp sạch sẽ chat...', false);
+    const count = await cleanAllUserMessages(chatId);
+    return sendOrReplaceMenu(
+      chatId,
+      `
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
+━━━━━━━━━━━━━━━━━━━━
+🧹 <b>ĐÃ DỌN DẸP SẠCH ${count} TIN NHẮN TRONG CHAT!</b>
+Mọi tin nhắn và menu cũ đã được xóa sạch hoàn toàn. Chỉ giữ lại 1 menu điều khiển duy nhất này.
+
+👇 <b>Bấm chọn cổng game để bắt đầu soi cầu:</b>
+      `.trim(),
+      { reply_markup: isAdmin ? getAdminKeyboard() : getUserKeyboard() }
+    );
   }
 
   // Thao tác sửa link cổng
@@ -1382,9 +1465,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     const used = list.filter(t => t.used).length;
     const free = list.length - used;
 
-    return sendMessage(
-      chatId,
-      `
+    const text = `
 🔑 <b>THỐNG KÊ TOKEN BẢN QUYỀN TỪ FIREBASE:</b>
 ━━━━━━━━━━━━━━━━━━━━
 • Tổng token: <b>${list.length}</b>
@@ -1392,16 +1473,20 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 • 🔴 Đã kích hoạt: <b>${used}</b>
 ━━━━━━━━━━━━━━━━━━━━
 💡 Tạo thêm token nhanh: gõ <code>/taotoken 30ngay</code> hoặc bấm nút bên dưới:
-      `.trim(),
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '⚡ Tạo Token Mới', callback_data: 'admin_create_token_prompt' }],
-            [{ text: '🔙 Quay Lại', callback_data: 'back_main' }]
-          ]
-        }
-      }
-    );
+    `.trim();
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: '⚡ Tạo Token Mới', callback_data: 'admin_create_token_prompt' }],
+        [{ text: '🔙 Quay Lại Menu Admin', callback_data: 'admin_dashboard' }]
+      ]
+    };
+
+    const res = await editMessageText(chatId, messageId, text, { reply_markup: keyboard });
+    if (!res || !res.ok) {
+      await sendMessage(chatId, text, { reply_markup: keyboard });
+    }
+    return;
   }
 
   // ================= GENERAL USER ACTIONS =================
@@ -1412,7 +1497,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 
     // Gửi màn hình quét nhịp bàn cầu trước
     const scanText = `
-🐻❄️ <b>ĐANG BẮT VỊ & SOI CẦU VẢ NHÀ CÁI...</b> 🐻❄️
+🐻 <b>ĐANG BẮT VỊ & SOI CẦU VẢ NHÀ CÁI...</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 🎮 Cổng: <b>${channelData.channel.platform}</b> (${channelData.channel.gameName})
 ⚡ <i>Đang đọc vị xúc xắc, rà soát nhịp bẻ cầu & bắt dải điểm...</i>
@@ -1447,6 +1532,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     if (!res || !res.ok) {
       await sendMessage(chatId, text, { reply_markup: keyboard });
     }
+    return;
   }
 
   // Sảnh Sicbo Bão VIP
@@ -1463,7 +1549,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     }
     rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
 
-    editMessageText(chatId, messageId, `
+    return editMessageText(chatId, messageId, `
 🐉 <b>SẢNH SICBO VIP - ĐẦY ĐỦ CỬA TÀI, XỈU & BÃO (BỘ 3)</b> 🐉
 ━━━━━━━━━━━━━━━━━━━━
 <i>Chỉ riêng Sicbo mới có cửa BÃO (Bộ 3 đồng nhất 1-1-1 đến 6-6-6) với tỉ lệ trả thưởng cực khủng. Hệ thống tự động phân tích và cảnh báo khi có tín hiệu Bão nổ!</i>
@@ -1488,7 +1574,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     }
     rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
 
-    editMessageText(chatId, messageId, `
+    return editMessageText(chatId, messageId, `
 ⚪ <b>SẢNH XÓC ĐĨA LIVE VIP - BẮT VỊ TỨ MÀU CHẴN LẺ</b> ⚪
 ━━━━━━━━━━━━━━━━━━━━
 <i>Phân tích 4 đồng xu quân bài (Sấp đôi 2 Đỏ 2 Trắng, 3 Trắng 1 Đỏ, 3 Đỏ 1 Trắng, Tứ Tử). Tự động nhận diện thế cầu Chẵn/Lẻ!</i>
@@ -1504,7 +1590,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     const overviewList = collector.getAiOverview();
     const top5 = overviewList.slice(0, 8);
 
-    let text = `🐻❄️ <b>BẢNG VÀNG THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️\n━━━━━━━━━━━━━━━━━━━━\n`;
+    let text = `🐻 <b>BẢNG VÀNG THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻\n━━━━━━━━━━━━━━━━━━━━\n`;
     text += `<i>Thống kê các bàn cầu đang có phong độ ăn thông và húp dày nhất hiện tại. Hệ thống bám cầu thực chiến 24/7 và đối chiếu kết quả từng giây với nhà cái!</i>\n\n`;
     text += `🏆 <b>TOP BÀN CẦU ĐANG HÚP KHÉT NHẤT:</b>\n`;
 
@@ -1531,7 +1617,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     }
     rows.push([{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]);
 
-    editMessageText(chatId, messageId, text, { reply_markup: { inline_keyboard: rows } });
+    return editMessageText(chatId, messageId, text, { reply_markup: { inline_keyboard: rows } });
   }
 
   // Chi tiết phong độ của 1 bàn cầu
@@ -1545,7 +1631,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     const isSicbo = ch.gameType === 'sicbo';
     const isXocdia = ch.gameType === 'xocdia';
 
-    let text = `🐻❄️ <b>CHI TIẾT PHONG ĐỘ BÀN CẦU: ${ch.platform} (${ch.gameName})</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
+    let text = `🐻 <b>CHI TIẾT PHONG ĐỘ BÀN CẦU: ${ch.platform} (${ch.gameName})</b>\n━━━━━━━━━━━━━━━━━━━━\n`;
     text += `📊 <b>CHIẾN TÍCH THỰC CHIẾN:</b>\n`;
     text += `• Tổng số tay đã theo dõi: <b>${ai?.total_bets || 0} tay</b>\n`;
     text += `• Số tay Húp trọn: <b>${ai?.total_wins || 0} tay</b> (${ai?.win_rate || 78}%)\n`;
@@ -1588,7 +1674,7 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 
     text += `━━━━━━━━━━━━━━━━━━━━`;
 
-    editMessageText(chatId, messageId, text, {
+    return editMessageText(chatId, messageId, text, {
       reply_markup: {
         inline_keyboard: [
           [{ text: '🔮 Soi Cầu Ngay Cổng Này', callback_data: `pred_${channelId}` }],
@@ -1611,14 +1697,18 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     });
     histText += `━━━━━━━━━━━━━━━━━━━━\n⏱ <i>Dữ liệu cập nhật liên tục từ cổng game</i>`;
 
-    sendMessage(chatId, histText, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '🔮 Xem Dự Đoán Phiên Tiếp', callback_data: `pred_${channelId}` }],
-          [{ text: '🔙 Quay Lại Menu', callback_data: 'back_main' }]
-        ]
-      }
-    });
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: '🔮 Xem Dự Đoán Phiên Tiếp', callback_data: `pred_${channelId}` }],
+        [{ text: '🔙 Quay Lại Menu', callback_data: 'back_main' }]
+      ]
+    };
+
+    const res = await editMessageText(chatId, messageId, histText, { reply_markup: keyboard });
+    if (!res || !res.ok) {
+      await sendMessage(chatId, histText, { reply_markup: keyboard });
+    }
+    return;
   }
 
   // Danh sách tất cả cổng game
@@ -1635,20 +1725,26 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     }
     rows.push([{ text: '🔙 Quay Lại', callback_data: 'back_main' }]);
 
-    editMessageText(chatId, messageId, '📋 <b>DANH SÁCH TẤT CẢ CÁC CỔNG GAME HỖ TRỢ:</b>\nBấm chọn cổng game bạn muốn soi cầu:', {
+    return editMessageText(chatId, messageId, '📋 <b>DANH SÁCH TẤT CẢ CÁC CỔNG GAME HỖ TRỢ:</b>\nBấm chọn cổng game bạn muốn soi cầu:', {
       reply_markup: { inline_keyboard: rows }
     });
   }
 
   // Bật/tắt thông báo tự động
   else if (data === 'toggle_notify') {
+    let notifyText = '';
     if (notificationSubscribers.has(chatId)) {
       notificationSubscribers.delete(chatId);
-      sendMessage(chatId, '🔕 <b>Đã TẮT</b> tính năng tự động gửi tin nhắn báo phiên mới.');
+      if (lastBroadcastMessageId[chatId]) {
+        await deleteMessage(chatId, lastBroadcastMessageId[chatId]).catch(() => {});
+        delete lastBroadcastMessageId[chatId];
+      }
+      notifyText = '🔕 Đã TẮT tính năng tự động báo phiên mới.';
     } else {
       notificationSubscribers.add(chatId);
-      sendMessage(chatId, '🔔 <b>Đã BẬT</b> tính năng tự động báo phiên mới!\nBot sẽ tự động gửi dự đoán ngay khi nhà cái nhảy phiên tiếp theo.');
+      notifyText = '🔔 Đã BẬT báo phiên mới tự động (chỉ giữ 1 tin mới nhất, không rác chat)!';
     }
+    return answerCallbackQuery(query.id, notifyText, true);
   }
 
   // Phong độ thực chiến
@@ -1656,10 +1752,8 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
     const channelData = collector.getChannelData('sunwin_tx');
     const bt = channelData.prediction?.backtest || { winRate: 82.5, currentStreak: 4, maxStreak: 9 };
 
-    sendMessage(
-      chatId,
-      `
-🐻❄️ <b>PHONG ĐỘ THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
+    const text = `
+🐻 <b>PHONG ĐỘ THỰC CHIẾN - VẢ VỠ MỒM NHÀ CÁI</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 🎯 <b>Tỉ Lệ Húp Bình Quân:</b> <code>${bt.winRate}%</code>
 🔥 <b>Chuỗi Ăn Thông Hiện Tại:</b> <code>${bt.currentStreak} tay</code>
@@ -1672,20 +1766,22 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 4. <b>Phân định rõ ràng:</b> Tài Xỉu chỉ chơi Tài/Xỉu - Sicbo mới đánh Bão!
 ━━━━━━━━━━━━━━━━━━━━
 <i>Được kiểm chứng trực tiếp từng giây trên hơn 25+ sòng bài lớn!</i>
-      `.trim(),
-      {
-        reply_markup: {
-          inline_keyboard: [[{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]]
-        }
-      }
-    );
+    `.trim();
+
+    const keyboard = {
+      inline_keyboard: [[{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]]
+    };
+
+    const res = await editMessageText(chatId, messageId, text, { reply_markup: keyboard });
+    if (!res || !res.ok) {
+      await sendMessage(chatId, text, { reply_markup: keyboard });
+    }
+    return;
   }
 
   // Thông tin user
   else if (data === 'user_info') {
-    sendMessage(
-      chatId,
-      `
+    const text = `
 👤 <b>HỒ SƠ CHIẾN BINH VẢ VỠ MỒM NHÀ CÁI:</b>
 ━━━━━━━━━━━━━━━━━━━━
 🆔 <b>Telegram ID:</b> <code>${userId}</code>
@@ -1693,23 +1789,32 @@ Hỗ trợ tất cả các nhà mạng và thẻ game:
 🟢 <b>Trạng thái:</b> ${isAdmin ? '👑 SUPER ADMIN' : '🟢 ĐÃ KÍCH HOẠT BẢN QUYỀN VIP'}
 ━━━━━━━━━━━━━━━━━━━━
 💬 <b>Hỗ trợ Admin:</b>\n${ADMIN_CONTACT}
-      `.trim(),
-      {
-        reply_markup: {
-          inline_keyboard: [[{ text: '🔙 Quay Lại', callback_data: 'back_main' }]]
-        }
-      }
-    );
+    `.trim();
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: '🧹 Dọn Dẹp / Xóa Hết Tin Cũ', callback_data: 'clean_chat' }],
+        [{ text: '🔙 Quay Lại Menu Chính', callback_data: 'back_main' }]
+      ]
+    };
+
+    const res = await editMessageText(chatId, messageId, text, { reply_markup: keyboard });
+    if (!res || !res.ok) {
+      await sendMessage(chatId, text, { reply_markup: keyboard });
+    }
+    return;
   }
 
   // Quay lại menu chính
   else if (data === 'back_main') {
     const keyboard = isAdmin ? getAdminKeyboard() : getUserKeyboard();
-    editMessageText(chatId, messageId, `
-🐻❄️ <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻❄️
+    const text = `
+🐻 <b>VẢ VỠ MỒM NHÀ CÁI</b> 🐻
 ━━━━━━━━━━━━━━━━━━━━
 👇 <b>Chọn cổng game bạn muốn bắt đầu vả nhà cái:</b>
-    `.trim(), {
+    `.trim();
+
+    return editMessageText(chatId, messageId, text, {
       reply_markup: keyboard
     });
   }
@@ -1745,8 +1850,8 @@ async function startPolling() {
   }
 }
 
-// Tự động phát sóng phiên mới
-setInterval(() => {
+// Tự động phát sóng phiên mới (chỉ giữ đúng 1 tin mới nhất, không bao giờ spam làm rác chat)
+setInterval(async () => {
   if (notificationSubscribers.size === 0) return;
 
   const channelData = collector.getChannelData('sunwin_tx');
@@ -1756,13 +1861,27 @@ setInterval(() => {
     lastBroadcastSessions['sunwin_tx'] = currentPhien;
     const broadcastMsg = `🔔 <b>TÍN HIỆU PHIÊN MỚI!</b>\n` + formatPredictionMessage(channelData);
 
-    notificationSubscribers.forEach(userChatId => {
-      sendMessage(userChatId, broadcastMsg, {
+    for (const userChatId of notificationSubscribers) {
+      // Xóa tin broadcast cũ trước khi gửi tin mới
+      if (lastBroadcastMessageId[userChatId]) {
+        await deleteMessage(userChatId, lastBroadcastMessageId[userChatId]).catch(() => {});
+        delete lastBroadcastMessageId[userChatId];
+      }
+      const res = await sendMessage(userChatId, broadcastMsg, {
         reply_markup: {
-          inline_keyboard: [[{ text: '🎲 Soi Cầu Thêm', callback_data: 'pred_sunwin_tx' }]]
+          inline_keyboard: [
+            [
+              { text: '🎲 Soi Cầu Thêm', callback_data: 'pred_sunwin_tx' },
+              { text: '🔕 Tắt Báo Tự Động', callback_data: 'toggle_notify' }
+            ]
+          ]
         }
       }).catch(() => {});
-    });
+
+      if (res && res.ok && res.result?.message_id) {
+        lastBroadcastMessageId[userChatId] = res.result.message_id;
+      }
+    }
   }
 }, 6000);
 
