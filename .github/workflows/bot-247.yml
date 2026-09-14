@@ -4,9 +4,14 @@ on:
   push:
     branches: [ main, master ]
   schedule:
-    # Tự động kích hoạt lại mỗi 5 giờ (0h, 5h, 10h, 15h, 20h UTC)
-    - cron: '0 */5 * * *'
+    # Tự động kích hoạt định kỳ mỗi 4 giờ
+    - cron: '0 */4 * * *'
   workflow_dispatch:
+
+# Đảm bảo token có đủ quyền tự động kích hoạt lại workflow kế tiếp
+permissions:
+  actions: write
+  contents: read
 
 concurrency:
   group: bot-running-group

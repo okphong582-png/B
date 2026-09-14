@@ -1,13 +1,24 @@
 {
-  "name": "new-folder-(3)",
+  "name": "ai-taixiu-vip-bot",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI Tai Xiu Multi-Portal Collector & Telegram Bot 24/7",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "bot": "node runner-247.js",
+    "test": "node -c server.js && node -c bot.js"
   },
-  "keywords": [],
-  "author": "",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "taixiu",
+    "telegram-bot",
+    "ai-prediction",
+    "cloud-deploy"
+  ],
+  "author": "steeveen",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {

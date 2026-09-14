@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: ai-taixiu-bot-247
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8320966192:AAFUvbXL9LlBQNYRWly3L478eaEzHTNHOwI

@@ -11,6 +11,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Healthcheck & Keep-Alive endpoint
+app.get('/ping', (req, res) => res.status(200).send('pong'));
+app.get('/healthz', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime() }));
+
 // API: Lấy danh sách tất cả các cổng game và trạng thái
 app.get('/api/channels', (req, res) => {
   try {
@@ -160,5 +164,15 @@ app.listen(PORT, () => {
   console.log(`👑 [ADMIN TOKEN MANAGER] http://localhost:${PORT}/admin.html`);
   console.log(`📡 Đã tải danh sách các cổng game và khởi động bộ soi cầu đa thuật toán`);
   console.log(`====================================================`);
+
+  // Tự động kích hoạt Anti-Sleep 24/7 (tự ping mỗi 8 phút) nếu chạy trên Render / Koyeb / Heroku
+  const externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || process.env.WEB_URL;
+  if (externalUrl) {
+    const httpLib = externalUrl.startsWith('https') ? require('https') : require('http');
+    setInterval(() => {
+      httpLib.get(`${externalUrl}/ping`, () => {}).on('error', () => {});
+    }, 8 * 60 * 1000);
+    console.log(`🛡️ [Keep-Alive 24/7] Đã bật cơ chế tự động chống ngủ đông cho: ${externalUrl}`);
+  }
 });
 
